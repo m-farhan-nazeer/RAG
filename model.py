@@ -123,3 +123,14 @@ query3_embed = model.encode(query3)
 
 print(f"Similarity between '{query1}' and '{query2}' = {cosine_similarity(query1_embed, query2_embed)[0]}")
 print(f"Similarity between '{query1}' and '{query3}' = {cosine_similarity(query1_embed, query3_embed)[0]}")
+
+
+query = "Taylor Swift"
+query_embed = model.encode(query)
+# The result is a matrix with one matrix per sample. Since there is only one sample (the query), it is a matrix with one matrix within.
+# This is why you need to get the first element
+similarity_scores = cosine_similarity(query_embed, EMBEDDINGS)
+similarity_indices = np.argsort(-similarity_scores) # Sort on decreasing order (sort the negative on increasing order), but return the indices
+# Top 2 indices
+top_2_indices = similarity_indices[:2]
+print(top_2_indices)
