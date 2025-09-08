@@ -105,4 +105,10 @@ EMBEDDINGS = joblib.load("embeddings.joblib")
 
 model_name = os.path.join(os.environ['MODEL_PATH'],"BAAI/bge-base-en-v1.5" )
 model = SentenceTransformer(model_name)
+
+
+# Example usage
+query = "RAG is awesome"
+# Using, but truncating the result to not pollute the output, don't truncate it in the exercise.
+model.encode(query)[:40]
     
