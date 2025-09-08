@@ -201,3 +201,68 @@ rrf_list = reciprocal_rank_fusion(list1, list2)
 print(f"Semantic Search List: {list1}")
 print(f"BM25 List: {list2}")
 print(f"RRF List: {rrf_list}")
+
+
+def generate_final_prompt(query, top_k, retrieve_function = None, use_rag=True):
+    """
+    Generates an augmented prompt for a Retrieval-Augmented Generation (RAG) system by retrieving the top_k most 
+    relevant documents based on a given query.
+
+    Parameters:
+    query (str): The search query for which the relevant documents are to be retrieved.
+    top_k (int): The number of top relevant documents to retrieve.
+    retrieve_function (callable): The function used to retrieve relevant documents. If 'reciprocal_rank_fusion', 
+                                  it will combine results from different retrieval functions.
+    use_rag (bool): A flag to determine whether to incorporate retrieved data into the prompt (default is True).
+
+    Returns:
+    str: A prompt that includes the top_k relevant documents formatted for use in a RAG system.
+    """
+
+    # Define the prompt as the initial query
+    prompt = query
+    
+    # If not using rag, return the prompt
+    if not use_rag:
+        return prompt
+
+
+    # Determine which retrieve function to use based on its name.
+    if retrieve_function.__name__ == 'reciprocal_rank_fusion':
+        # Retrieve top documents using two different methods.
+        list1 = semantic_search_retrieve(query, top_k)
+        list2 = bm25_retrieve(query, top_k)
+        # Combine the results using reciprocal rank fusion.
+        top_k_indices = retrieve_function(list1, list2, top_k)
+    else:
+        # Use the provided retrieval function.
+        top_k_indices = retrieve_function(query=query, top_k=top_k)
+    
+    
+    # Retrieve documents from the dataset using the indices.
+    relevant_documents = query_news(top_k_indices)
+    
+    formatted_documents = []
+
+    # Iterate over each retrieved document.
+    for document in relevant_documents:
+        # Format each document into a structured string.
+        formatted_document = (
+            f"Title: {document['title']}, Description: {document['description']}, "
+            f"Published at: {document['published_at']}\nURL: {document['url']}"
+        )
+        # Append the formatted string to the main data string with a newline for separation.
+        formatted_documents.append(formatted_document)
+
+    retrieve_data_formatted = "\n".join(formatted_documents)
+    
+    prompt = (
+        f"Answer the user query below. There will be provided additional information for you to compose your answer. "
+        f"The relevant information provided is from 2024 and it should be added as your overall knowledge to answer the query, "
+        f"you should not rely only on this information to answer the query, but add it to your overall knowledge."
+        f"Query: {query}\n"
+        f"2024 News: {retrieve_data_formatted}"
+    )
+
+    
+    return prompt
