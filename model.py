@@ -170,3 +170,28 @@ def semantic_search_retrieve(query, top_k=5):
     top_k_indices = [int(x) for x in top_k_indices_array]
     
     return top_k_indices
+
+
+def reciprocal_rank_fusion(list1, list2, top_k=5, K=60):
+    """
+    Fuse rank from multiple IR systems using Reciprocal Rank Fusion.
+    """
+
+    # Create a dictionary to store the RRF scores for each document index
+    rrf_scores = {}
+
+    # Iterate over each document list
+    for lst in [list1, list2]:
+        for rank, item in enumerate(lst, start=1):
+            if item not in rrf_scores:
+                rrf_scores[item] = 0
+            # Use rank directly instead of lst[rank]
+            rrf_scores[item] += 1 / (K + rank)
+
+    # Sort items by score (highest first)
+    sorted_items = sorted(rrf_scores, key=rrf_scores.get, reverse=True)
+
+    # Take top-k
+    top_k_indices = sorted_items[:top_k]
+
+    return top_k_indices
