@@ -1,0 +1,280 @@
+import pandas as pd
+from sentence_transformers import SentenceTransformer
+import numpy as np
+import matplotlib.pyplot as plt
+import joblib
+import os
+
+from sklearn.datasets import fetch_20newsgroups
+
+# Load the 20 Newsgroups dataset
+newsgroups_train = fetch_20newsgroups(subset='train', shuffle=True, random_state=42)
+
+# Convert the dataset to a DataFrame for easier handling
+df = pd.DataFrame({
+    'text': newsgroups_train.data,
+    'category': newsgroups_train.target
+})
+
+# Display some basic information about the dataset
+print(df.head())
+print("\nDataset Size:", df.shape)
+print("\nNumber of Categories:", len(newsgroups_train.target_names))
+print("\nCategories:", newsgroups_train.target_names)
+
+print(f"TEXT:\n\t{df['text'][0]}\nCATEGORY:\n\t{newsgroups_train.target_names[df['category'][0]]}")
+
+# Load the pre-trained sentence transformer model using the method .encode
+model_name =  "BAAI/bge-base-en-v1.5"
+model = SentenceTransformer(os.path.join(os.environ['MODEL_PATH'],model_name))
+
+embedding_vectors = joblib.load('embeddings.joblib')
+
+
+def preprocess_text(text):
+    """
+    Preprocess the text data by removing leading and trailing whitespace.
+
+    Parameters:
+    text (str): The input text to preprocess.
+
+    Returns:
+    str: The preprocessed text, with leading and trailing whitespace removed.
+    """
+    # Example preprocessing: remove leading/trailing whitespace
+    text = text.strip()
+    return text
+
+
+def cosine_similarity(v1, array_of_vectors):
+    """
+    Compute the cosine similarity between a vector and an array of vectors.
+
+    Parameters:
+    v1 (array-like): The first vector.
+    array_of_vectors (array-like): An array of vectors or a single vector.
+
+    Returns:
+    list: A list of cosine similarities between v1 and each vector in array_of_vectors.
+    """
+    # Ensure that v1 is a numpy array
+    v1 = np.array(v1)
+    # Initialize a list to store similarities
+    similarities = []
+    # Check if array_of_vectors is a single vector
+    if len(np.shape(array_of_vectors)) == 1:
+        array_of_vectors = [array_of_vectors]
+    # Iterate over each vector in the array
+    for v2 in array_of_vectors:
+        # Convert the current vector to a numpy array
+        v2 = np.array(v2)
+        # Compute the dot product of v1 and v2
+        dot_product = np.dot(v1, v2)
+        # Compute the norms of the vectors
+        norm_v1 = np.linalg.norm(v1)
+        norm_v2 = np.linalg.norm(v2)
+        # Compute the cosine similarity and append to the list
+        similarity = dot_product / (norm_v1 * norm_v2)
+        similarities.append(similarity)
+    return similarities
+
+
+def top_k_greatest_indices(lst, k):
+    """
+    Get the indices of the top k greatest items in a list.
+
+    Parameters:
+    lst (list): The list of elements to evaluate.
+    k (int): The number of top elements to retrieve by index.
+
+    Returns:
+    list: A list of indices corresponding to the top k greatest elements in lst.
+    """
+    # Enumerate the list to keep track of indices
+    indexed_list = list(enumerate(lst))
+    # Sort by element values in descending order
+    sorted_by_value = sorted(indexed_list, key=lambda x: x[1], reverse=True)
+    # Extract the top k indices
+    top_k_indices = [index for index, value in sorted_by_value[:k]]
+    return top_k_indices
+
+def retrieve_documents(query, embeddings, model, top_k=5):
+    """
+    Retrieve the top-k most similar documents to a given query based on cosine similarity.
+
+    Parameters:
+    query (str): The search query for which similar documents are to be retrieved.
+    embeddings (list): A list of document embeddings against which the query is compared.
+    model (object): A model with an 'encode' method to transform the query into an embedding.
+    top_k (int, optional): The number of top documents to retrieve. Defaults to 5.
+
+    Returns:
+    None: Prints the most similar documents and their categories to the console.
+    """
+    # Preprocess and encode the query
+    query_clean = preprocess_text(query)  # Clean the query by removing extra spaces
+    query_embedding = model.encode(query_clean, convert_to_tensor=True)  # Encode the cleaned query
+
+    # Compute cosine similarities between the query and the dataset embeddings
+    cosine_scores = []
+    for x in embeddings:
+        # Append the similarity score of the query embedding against each document embedding
+        cosine_scores.append(cosine_similarity(query_embedding, x))
+
+    # Retrieve top-k documents; torch.topk returns the indices
+    top_results = top_k_greatest_indices(cosine_scores, k=top_k)
+
+    # Display the results
+    print(f"Query: {query}")
+    for x in top_results:
+        # Print a snippet of the document text
+        print(f"Document: {df.iloc[x]['text'][:200]}...")
+        # Print the category of the document using its index
+        print(f"Category: {newsgroups_train.target_names[df.iloc[x]['category']]}...")
+        print("\n\n")
+
+        
+# Example query
+example_query = "space exploration"
+retrieve_documents(example_query, embedding_vectors, model, top_k = 2)
+
+
+def precision(tp, tn, fp, fn):
+    """
+    Calculate the precision of a binary classification model.
+
+    Precision is the ratio of true positives (TP) to the sum of true positives
+    and false positives (FP), which indicates the accuracy of positive predictions.
+
+    Args:
+        tp (int): True positives.
+        tn (int): True negatives (not used in precision calculation).
+        fp (int): False positives.
+        fn (int): False negatives (not used in precision calculation).
+
+    Returns:
+        float: The precision value, or 0.0 if the denominator is zero.
+    
+    Raises:
+        ValueError: If any input is negative.
+    """
+    if tp < 0 or tn < 0 or fp < 0 or fn < 0:
+        raise ValueError("All input values must be non-negative.")
+    
+    if tp + fp == 0:
+        return 0.0
+
+    return tp / (tp + fp)
+
+
+def recall(tp, tn, fp, fn):
+    """
+    Calculate the recall (sensitivity) of a binary classification model.
+
+    Recall is the ratio of true positives (TP) to the sum of true positives (TP)
+    and false negatives (FN), measuring the ability to detect positive instances.
+
+    Args:
+        tp (int): True positives.
+        tn (int): True negatives (not used in recall calculation).
+        fp (int): False positives (not used in recall calculation).
+        fn (int): False negatives.
+
+    Returns:
+        float: The recall value, or 0.0 if the denominator is zero.
+    
+    Raises:
+        ValueError: If any input is negative.
+    """
+    if tp < 0 or tn < 0 or fp < 0 or fn < 0:
+        raise ValueError("All input values must be non-negative.")
+
+    if tp + fn == 0:
+        return 0.0
+
+    return tp / (tp + fn)
+
+# Define more complex test queries with their corresponding desired categories
+test_queries = [
+    {"query": "advancements in space exploration technology", "desired_category": "sci.space"},
+    {"query": "real-time rendering techniques in computer graphics", "desired_category": "comp.graphics"},
+    {"query": "latest findings in cardiovascular medical research", "desired_category": "sci.med"},
+    {"query": "NHL playoffs and team performance statistics", "desired_category": "rec.sport.hockey"},
+    {"query": "impacts of cryptography in online security", "desired_category": "sci.crypt"},
+    {"query": "the role of electronics in modern computing devices", "desired_category": "sci.electronics"},
+    {"query": "motorcycles maintenance tips for enthusiasts", "desired_category": "rec.motorcycles"},
+    {"query": "high-performance baseball tactics for championships", "desired_category": "rec.sport.baseball"},
+    {"query": "historical influence of politics on society", "desired_category": "talk.politics.misc"},
+    {"query": "latest technology trends in the Windows operating system", "desired_category": "comp.os.ms-windows.misc"}
+    
+]
+def compute_metrics(queries, embeddings, model, top_k=5):
+    """
+    Compute precision and recall metrics for a list of queries against a dataset of document embeddings.
+
+    Parameters:
+    queries (list): A list of dictionaries, each containing a "query" and a "desired_category".
+    embeddings (list): A list of document embeddings to which queries will be compared.
+    model (object): A model with an 'encode' method to transform queries into embeddings.
+    top_k (int, optional): The number of top documents to consider for each query. Defaults to 5.
+
+    Returns:
+    list: A list of dictionaries, each containing the query, its precision, and recall.
+    """
+    # Initialize a list to store computed metric results
+    results = []
+    
+    # Iterate over each query in the queries list
+    for item in queries:
+        query = item["query"]
+        desired_category = item["desired_category"]
+
+        # Retrieve documents: preprocess and encode the query
+        query_clean = preprocess_text(query)
+        query_embedding = model.encode(query_clean, convert_to_tensor=True)
+
+        # Compute cosine similarities with the dataset embeddings
+        cosine_scores = []
+        for x in embedding_vectors:
+            cosine_scores.append(cosine_similarity(query_embedding, x))
+
+        # Retrieve top-k documents based on cosine similarity
+        top_results = top_k_greatest_indices(cosine_scores, k=top_k)
+
+        # Check the categories of the retrieved documents
+        retrieved_categories = [
+            newsgroups_train.target_names[df.iloc[idx]["category"]] for idx in top_results
+        ]
+        
+        # Calculate true positives and false positives
+        true_positives = sum(1 for cat in retrieved_categories if cat == desired_category)
+        false_positives = top_k - true_positives
+        # Assume all other relevant documents in this context are false negatives
+        false_negatives = sum(
+            newsgroups_train.target_names[df.iloc[idx]["category"]] == desired_category 
+            for idx in top_results
+        ) - true_positives
+        # TN (True Negatives) is generally not well-defined in this informational retrieval context
+        true_negatives = 0
+
+        # Calculate precision and recall using defined functions
+        p = precision(true_positives, true_negatives, false_positives, false_negatives)
+        r = recall(true_positives, true_negatives, false_positives, false_negatives)
+
+        # Append the results to the list
+        results.append({
+            "query": query,
+            "precision": p,
+            "recall": r,
+        })
+
+    return results
+
+
+# Run the queries and compute metrics
+results = compute_metrics(test_queries, embedding_vectors, model)
+
+# Display the results
+print("Results:")
+for result in results:
+    print(f"Query: {result['query']}, Precision: {result['precision']:.2f}, Recall: {result['recall']:.2f}")
