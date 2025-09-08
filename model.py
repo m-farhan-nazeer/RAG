@@ -98,4 +98,11 @@ def bm25_retrieve(query: str, top_k: int = 5):
     ### END CODE HERE ###
     
     return top_k_indices
+
+
+    # Load the pre-computed embeddings with joblib
+EMBEDDINGS = joblib.load("embeddings.joblib")
+
+model_name = os.path.join(os.environ['MODEL_PATH'],"BAAI/bge-base-en-v1.5" )
+model = SentenceTransformer(model_name)
     
