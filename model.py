@@ -134,3 +134,39 @@ similarity_indices = np.argsort(-similarity_scores) # Sort on decreasing order (
 # Top 2 indices
 top_2_indices = similarity_indices[:2]
 print(top_2_indices)
+
+# GRADED CELL 
+
+def semantic_search_retrieve(query, top_k=5):
+    """
+    Retrieves the top k relevant documents for a given query using semantic search and cosine similarity.
+
+    This function generates an embedding for the input query and compares it against pre-computed document
+    embeddings using cosine similarity. The indices of the top k most similar documents are returned.
+
+    Args:
+        query (str): The search query for which relevant documents need to be retrieved.
+        top_k (int): The number of top relevant documents to retrieve. Default value is 5.
+
+    Returns:
+        List[int]: A list of indices corresponding to the top k most relevant documents in the corpus.
+    """
+    ### START CODE HERE ###
+    # Generate the embedding for the query using the pre-trained model
+    query_embedding = model.encode(query)
+    
+    # Calculate the cosine similarity scores between the query embedding and the pre-computed document embeddings
+    similarity_scores = cosine_similarity(query_embedding, EMBEDDINGS)
+    
+    # Sort the similarity scores in descending order and get the indices
+    similarity_indices = np.argsort(-similarity_scores)
+
+    # Select the indices of the top k documents as a numpy array
+    top_k_indices_array =similarity_indices[:top_k]
+
+    ### END CODE HERE ###
+    
+    # Cast them to int 
+    top_k_indices = [int(x) for x in top_k_indices_array]
+    
+    return top_k_indices
