@@ -71,3 +71,17 @@ def euclidean_distance(v1, array_of_vectors):
         dist = np.sqrt(np.sum((v1 - v2) ** 2))
         distances.append(dist)
     return [float(x) for x in distances]
+
+
+# Example 
+v1 = [1, 2]
+v2 = [1, 1]
+array_v = [[3, 2], [5, 6]]
+cosine_v1_v2 = cosine_similarity(v1, v2)
+cosine_v1_array_v = cosine_similarity(v1, array_v)
+euclidean_v1_v2 = euclidean_distance(v1, v2)
+euclidean_v1_array_v = euclidean_distance(v1, array_v)
+print(f"Cosine Similarity between v1 and v2: {cosine_v1_v2}")
+print(f"Cosine Similarities between v1 and array_v: {cosine_v1_array_v}")
+print(f"Euclidean Distance between v1 and v2: {euclidean_v1_v2}")
+print(f"Euclidean Distances between v1 and array_v: {euclidean_v1_array_v}")
