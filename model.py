@@ -12,3 +12,5 @@ from utils import (
     display_widget
 )
 import unittests
+
+NEWS_DATA = read_dataframe("news_data_dedup.csv")
