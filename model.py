@@ -278,3 +278,7 @@ def llm_call(query, retrieve_function = None, top_k = 5,use_rag = True):
     generated_message = generated_response['content']
     
     return generated_message
+
+
+query = "Recent news in technology. Provide sources."
+print(llm_call(query, retrieve_function = semantic_search_retrieve))
