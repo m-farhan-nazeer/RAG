@@ -195,3 +195,9 @@ def reciprocal_rank_fusion(list1, list2, top_k=5, K=60):
     top_k_indices = sorted_items[:top_k]
 
     return top_k_indices
+list1 = semantic_search_retrieve('What are the recent news about GDP?')
+list2 = bm25_retrieve('What are the recent news about GDP?')
+rrf_list = reciprocal_rank_fusion(list1, list2)
+print(f"Semantic Search List: {list1}")
+print(f"BM25 List: {list2}")
+print(f"RRF List: {rrf_list}")
