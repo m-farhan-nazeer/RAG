@@ -14,3 +14,19 @@ from utils import (
 import unittests
 
 NEWS_DATA = read_dataframe("news_data_dedup.csv")
+
+def query_news(indices):
+    """
+    Retrieves elements from a dataset based on specified indices.
+
+    Parameters:
+    indices (list of int): A list containing the indices of the desired elements in the dataset.
+    dataset (list or sequence): The dataset from which elements are to be retrieved. It should support indexing.
+
+    Returns:
+    list: A list of elements from the dataset corresponding to the indices provided in list_of_indices.
+    """
+     
+    output = [NEWS_DATA[index] for index in indices]
+
+    return output
