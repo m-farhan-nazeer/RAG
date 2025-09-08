@@ -266,3 +266,15 @@ def generate_final_prompt(query, top_k, retrieve_function = None, use_rag=True):
 
     
     return prompt
+
+
+def llm_call(query, retrieve_function = None, top_k = 5,use_rag = True):
+
+    # Get the system and user dictionaries
+    prompt = generate_final_prompt(query, top_k = top_k, retrieve_function = retrieve_function, use_rag = use_rag)
+
+    generated_response = generate_with_single_input(prompt)
+
+    generated_message = generated_response['content']
+    
+    return generated_message
