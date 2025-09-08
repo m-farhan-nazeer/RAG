@@ -112,3 +112,14 @@ query = "RAG is awesome"
 # Using, but truncating the result to not pollute the output, don't truncate it in the exercise.
 model.encode(query)[:40]
     
+
+query1 = "What are the primary colors"
+query2 = "Yellow, red and blue"
+query3 = "Cats are friendly animals"
+
+query1_embed = model.encode(query1)
+query2_embed = model.encode(query2)
+query3_embed = model.encode(query3)
+
+print(f"Similarity between '{query1}' and '{query2}' = {cosine_similarity(query1_embed, query2_embed)[0]}")
+print(f"Similarity between '{query1}' and '{query3}' = {cosine_similarity(query1_embed, query3_embed)[0]}")
