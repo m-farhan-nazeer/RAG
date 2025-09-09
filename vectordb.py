@@ -41,3 +41,33 @@ vectorizer_config = [Configure.NamedVectors.text2vec_transformers(
                 inference_url="http://127.0.0.1:5000", # Since we are using an API based vectorizer, you need to pass the URL used to make the calls 
                                                        # This was setup in our Flask application
             )]
+
+
+
+# Delete the collection in case it exists
+if client.collections.exists("example_collection"):
+    client.collections.delete("example_collection")
+
+
+
+if not client.collections.exists('example_collection'): # Creates only if the collection does not exist
+    collection = client.collections.create(
+            name='example_collection',
+            vectorizer_config=vectorizer_config, # The config we defined before,
+            reranker_config=Configure.Reranker.transformers(), # The reranker config
+
+            properties=[  # Define properties
+            Property(name="place",vectorize_property_name=True,data_type= DataType.TEXT),
+            Property(name="state",vectorize_property_name=True, data_type=DataType.TEXT),
+            Property(name="description",vectorize_property_name=True, data_type=DataType.TEXT),
+            Property(name="best_season_to_visit",vectorize_property_name=True, data_type=DataType.TEXT),
+            Property(name="attractions",vectorize_property_name=True, data_type=DataType.TEXT),
+            Property(name="budget",vectorize_property_name=True, data_type=DataType.TEXT),
+            Property(name="user_ratings", data_type=DataType.NUMBER),
+            Property(name="last_updated", data_type=DataType.DATE),
+
+        ]
+        )
+else:
+    collection = client.collections.get("example_collection")
+    
