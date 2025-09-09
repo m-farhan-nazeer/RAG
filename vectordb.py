@@ -112,3 +112,10 @@ result = collection.query.near_text(query = 'I want suggestions to travel during
 result = collection.query.bm25(query = 'I want suggestions to travel during Winter. I want cheap places.', 
                                     filters = Filter.by_property('budget').contains_any(['Low','Moderate']),
                                     limit = 4)
+
+
+
+result = collection.query.hybrid(query = 'I want suggestions to travel during Winter. I want cheap places.', 
+                                    filters = Filter.by_property('budget').contains_any(['Low','Moderate']),
+                                    alpha = 0.3,
+                                    limit = 4)
