@@ -102,7 +102,20 @@ def build_chunk_objs(book_text_obj, chunks):
 
 
 
-
+# Loading the client
+with suppress_subprocess_output():
+    try:
+        client = weaviate.connect_to_embedded(
+            persistence_data_path="/home/jovyan/data/collections/m3/ungraded_lab_2",
+            environment_variables={
+                "ENABLE_API_BASED_MODULES": "true", # Enable API based modules 
+                "ENABLE_MODULES": 'text2vec-transformers', # We will be using a transformer model 
+                "TRANSFORMERS_INFERENCE_API":"http://127.0.0.1:5000/", # The endpoint the weaviate API will be using to vectorize
+            }
+        )
+    except Exception as e:
+        ports = extract_ports(str(e))
+        client = weaviate.connect_to_local(port=8079, grpc_port=50050)
 
 
 
