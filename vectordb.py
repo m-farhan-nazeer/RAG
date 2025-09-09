@@ -70,4 +70,21 @@ if not client.collections.exists('example_collection'): # Creates only if the co
         )
 else:
     collection = client.collections.get("example_collection")
+
+
+
+
+# Set up a batch process with specified fixed size and concurrency
+with collection.batch.fixed_size(batch_size=1, concurrent_requests=1) as batch:
+    # Iterate over a subset of the dataset
+    for document in tqdm(data): # tqdm is a library to show progress bars
+            # Generate a UUID based on the article_content text for unique identification
+            uuid = generate_uuid5(document)
+
+            # Add the object to the batch with properties and UUID. 
+            # properties expects a dictionary with the keys being the properties.
+            batch.add_object(
+                properties=document,
+                uuid=uuid,
+            )
     
