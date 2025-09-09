@@ -1,0 +1,37 @@
+def get_chunks_fixed_size_with_overlap(text: str, chunk_size: int, overlap_fraction: float) -> List[str]:
+    """
+    Splits a given text into chunks of a fixed size with a specified overlap fraction between consecutive chunks.
+
+    Parameters:
+    - text (str): The input text to be split into chunks.
+    - chunk_size (int): The number of words each chunk should contain.
+    - overlap_fraction (float): The fraction of the chunk size that should overlap with the adjacent chunk.
+      For example, an overlap_fraction of 0.2 means 20% of the chunk size will be used as overlap.
+
+    Returns:
+    - List[str]: A list of chunks (each a string) where each chunk might overlap with its adjacent chunk.
+    """
+
+    # Split the text into individual words
+    text_words = text.split()
+    
+    # Calculate the number of words to overlap between consecutive chunks
+    overlap_int = int(chunk_size * overlap_fraction)
+    
+    # Initialize a list to store the resulting chunks
+    chunks = []
+    
+    # Iterate over text in steps of chunk_size to create chunks
+    for i in range(0, len(text_words), chunk_size):
+        # Determine the start and end indices for the current chunk,
+        # taking into account the overlap with the previous chunk
+        chunk_words = text_words[max(i - overlap_int, 0): i + chunk_size]
+        
+        # Join the selected words to form a chunk string
+        chunk = " ".join(chunk_words)
+        
+        # Append the chunk to the list of chunks
+        chunks.append(chunk)
+    
+    # Return the list of chunks
+    return chunks
