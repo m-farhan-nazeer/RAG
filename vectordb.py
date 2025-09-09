@@ -93,4 +93,11 @@ with collection.batch.fixed_size(batch_size=1, concurrent_requests=1) as batch:
 
 # Here we are fetching 2 objects with a filter by property, filtering by 'user_ratings, only objects with value greater or equal to 3.5'
 result = collection.query.fetch_objects(limit = 2, filters = Filter.by_property('user_ratings').greater_or_equal(3.5))
+
+
+
+
+result = collection.query.near_text(query = 'I want suggestions to travel during Winter. I want cheap places.', 
+                                    filters = Filter.by_property('budget').equal('Low'),
+                                    limit = 4)
     
