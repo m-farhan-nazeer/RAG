@@ -141,6 +141,16 @@ with suppress_subprocess_output():
         ports = extract_ports(str(e))
         client = weaviate.connect_to_local(port=8079, grpc_port=50050)
 
+# Adding elements in the collection - this insertion should NOT run as the collection is already vectorized for you. 
+if len(collection) == 0:
+    with collection.batch.fixed_size(batch_size=1, concurrent_requests=1) as batch:
+        for chunking_strategy, chunk_objects in tqdm.tqdm(chunk_obj_sets.items()):
+            for chunk_obj in chunk_objects:
+                chunk_obj["chunking_strategy"] = chunking_strategy
+                batch.add_object(
+                    properties=chunk_obj,
+                    uuid=generate_uuid5(chunk_obj)
+                )
 
 
 
