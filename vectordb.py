@@ -119,3 +119,16 @@ result = collection.query.hybrid(query = 'I want suggestions to travel during Wi
                                     filters = Filter.by_property('budget').contains_any(['Low','Moderate']),
                                     alpha = 0.3,
                                     limit = 4)
+
+
+
+from weaviate.classes.query import Rerank
+
+response = collection.query.near_text(
+    query="'I want suggestions to travel during Winter. I want cheap and fun places.'",  
+    limit=5,
+    rerank=Rerank(
+        prop="attractions",                   # The property to rerank on
+        query="Fun places"  # If not provided, the original query will be used
+    )
+)
