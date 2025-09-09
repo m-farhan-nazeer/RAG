@@ -54,3 +54,17 @@ def retrieve_relevant(query, documents, metric='cosine_similarity'):
         vals.sort(key=lambda x: x[1])
         
     return vals
+
+score = retrieve_relevant(query, documents, metric='euclidean')
+score
+
+display_widget(model)
+big_text = open("large_text.txt").read()
+len(big_text)
+
+# Entire text
+big_text_embedding = model.encode(big_text)
+
+# Text with fewer characters
+big_text_embedding_few_characters = model.encode(big_text[:3000])
+np.array_equal(big_text_embedding, big_text_embedding_few_characters)
