@@ -95,3 +95,47 @@ def build_chunk_objs(book_text_obj, chunks):
 
     # Return the list of chunk objects
     return chunk_objs
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# ----------------------------------------------RAG--------------------------------------------------
+
+# Set number of chunks to retrieve to compensate for different chunk sizes
+
+n_chunks_by_strat = dict()
+
+# Grab more of shorter chunks
+n_chunks_by_strat['fixed_size_25'] = 8
+n_chunks_by_strat['para_chunks'] = 8
+
+# Grab fewer of longer chunks
+n_chunks_by_strat['fixed_size_100'] = 2
+n_chunks_by_strat['para_chunks_min_25'] = 2
+
+# Perform Retreval augmented generation
+search_string = "history of git"  # Or "available git remote commands"
+
+for chunking_strategy in chunk_obj_sets.keys():
+    where_filter = Filter.by_property('chunking_strategy').equal(chunking_strategy)
+    response = collection.query.near_text(search_string, filters = where_filter, limit = n_chunks_by_strat[chunking_strategy])
+    context_string = ""
+    for obj in response.objects:
+        context_string += obj.properties['chunk'] + '\n'
+    prompt = PROMPT.format(search_string = search_string, context = context_string)
+    response = generate_with_single_input(prompt, role = 'assistant')
+    print(f"Search string: {search_string}")
+    print(f"Chunking Strategy: {chunking_strategy}:")
+    print(f"Response:\n\t{response['content']}")
+    print()
