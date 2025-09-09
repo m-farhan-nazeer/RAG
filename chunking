@@ -35,3 +35,30 @@ def get_chunks_fixed_size_with_overlap(text: str, chunk_size: int, overlap_fract
     
     # Return the list of chunks
     return chunks
+
+
+def get_book_text_objects():
+    # Source location
+    text_objs = list()
+    api_base_url = 'https://api.github.com/repos/progit/progit2/contents/book'  # Book base URL
+    chapter_urls = ['/01-introduction/sections', '/02-git-basics/sections']  # List of section URLs
+
+    # Loop through book chapters
+    for chapter_url in chapter_urls:
+        response = requests.get(api_base_url + chapter_url)  # Get the JSON data for the section files in the chapter
+
+        # Loop through inner files (sections)
+        for file_info in response.json():
+            if file_info['type'] == 'file':  # Only process files (not directories)
+                file_response = requests.get(file_info['download_url'])
+
+                # Build objects including metadata
+                chapter_title = file_info['download_url'].split('/')[-3]
+                filename = file_info['download_url'].split('/')[-1]
+                text_obj = {
+                    "body": file_response.text,
+                    "chapter_title": chapter_title,
+                    "filename": filename
+                }
+                text_objs.append(text_obj)
+    return text_objs
