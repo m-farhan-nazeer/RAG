@@ -152,7 +152,16 @@ if len(collection) == 0:
                     uuid=generate_uuid5(chunk_obj)
                 )
 
+search_string = "history of git"  # Or "available git remote commands"
 
+for chunking_strategy in chunk_obj_sets.keys():
+    where_filter = Filter.by_property('chunking_strategy').equal(chunking_strategy)
+    response = collection.query.near_text(search_string, filters = where_filter, limit = 2)
+    print(f"RETRIEVED OBJECTS FOR CHUNKING STRATEGY {chunking_strategy.upper()}:\n")
+    for i, obj in enumerate(response.objects):
+        print(f"===== Object {i} =====")
+        print(f"{obj.properties['chunk']}")
+        print()
 
 
 
