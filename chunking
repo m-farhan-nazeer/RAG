@@ -62,3 +62,36 @@ def get_book_text_objects():
                 }
                 text_objs.append(text_obj)
     return text_objs
+
+
+
+def build_chunk_objs(book_text_obj, chunks):
+    """
+    Constructs a list of chunk objects from a given book text object 
+    and its associated chunks.
+
+    Args:
+        book_text_obj (dict): A dictionary containing metadata for the book text, 
+                              including 'chapter_title' and 'filename'.
+        chunks (list): A list of chunks that represent parts of the book text.
+
+    Returns:
+        list: A list of dictionaries, each representing a chunk object 
+              with 'chapter_title', 'filename', 'chunk', and 'chunk_index'.
+    """
+    chunk_objs = list()  # Initialize an empty list to store chunk objects
+    
+    # Iterate over the chunks with an index
+    for i, c in enumerate(chunks):
+        # Create a dictionary for each chunk with its associated data
+        chunk_obj = {
+            "chapter_title": book_text_obj["chapter_title"],  # Chapter title from the book text object
+            "filename": book_text_obj["filename"],            # Filename from the book text object
+            "chunk": c,                                       # The actual chunk of text
+            "chunk_index": i                                  # The index of the chunk in the list
+        }
+        # Append the constructed chunk object to the list
+        chunk_objs.append(chunk_obj)
+
+    # Return the list of chunk objects
+    return chunk_objs
