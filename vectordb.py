@@ -101,3 +101,8 @@ result = collection.query.near_text(query = 'I want suggestions to travel during
                                     filters = Filter.by_property('budget').equal('Low'),
                                     limit = 4)
     
+
+
+result = collection.query.near_text(query = 'I want suggestions to travel during Winter. I want cheap places.', 
+                                    filters = Filter.by_property('budget').contains_any(['Low','Moderate']),
+                                    limit = 4)
