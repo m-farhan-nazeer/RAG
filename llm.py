@@ -34,3 +34,28 @@ def generate_params_dict(
 
 
     return kwargs
+
+def call_llm_with_context(prompt: str, context: list,  role: str = 'user', **kwargs):
+    """
+    Calls a language model with the given prompt and context to generate a response.
+
+    Parameters:
+    - prompt (str): The input text prompt provided by the user.
+    - role (str): The role of the participant in the conversation, e.g., "user" or "assistant".
+    - context (list): A list representing the conversation history, to which the new input is added.
+    - **kwargs: Additional keyword arguments for configuring the language model call (e.g., top_k, temperature).
+
+    Returns:
+    - response (str): The generated response from the language model based on the provided prompt and context.
+    """
+
+    # Append the dictionary {'role': role, 'content': prompt} into the context list
+    context.append({'role': role, 'content': prompt})
+
+    # Call the llm with multiple input passing the context list and the **kwargs
+    response = generate_with_multiple_input(context, **kwargs)
+
+    # Append the LLM response in the context dict
+    context.append(response) 
+    
+    return response
