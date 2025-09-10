@@ -235,3 +235,37 @@ def semantic_search_with_reranking(query: str,
     response_objects = [x.properties for x in response.objects]
     
     return response_objects 
+
+
+
+def llm_call(query: str, 
+             retrieve_function: callable = None, 
+             top_k: int = 5, 
+             use_rag: bool = True, 
+             use_rerank: bool = False, 
+             rerank_property: str = None, 
+             rerank_query: str = None) -> str:
+    """
+    Simulates a call to a language model by generating a prompt and using it to produce a response.
+
+    Args:
+        query (str): The initial query for which a response is sought.
+        retrieve_function (callable, optional): The function used to retrieve documents related to the query.
+        top_k (int, optional): The number of top documents to retrieve and use for generating the prompt. Defaults to 5.
+        use_rag (bool, optional): Indicates whether to use retrieval-augmented generation. Defaults to True.
+        use_rerank (bool, optional): Indicates whether to apply reranking to the retrieved documents. Defaults to False.
+        rerank_property (str, optional): The property to use for reranking. Required if 'use_rerank' is True.
+        rerank_query (str, optional): The query used specifically for reranking documents if reranking is enabled.
+
+    Returns:
+        str: The generated response content after processing the prompt with a language model.
+    """
+    
+    # Get the prompt
+    PROMPT = generate_final_prompt(query, top_k = top_k, retrieve_function = retrieve_function, use_rag = use_rag, use_rerank = use_rerank, rerank_property = rerank_property, rerank_query = rerank_query)
+    
+    generated_response = generate_with_single_input(PROMPT)
+
+    generated_message = generated_response['content']
+    
+    return generated_message
