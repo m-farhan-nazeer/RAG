@@ -1,5 +1,8 @@
 # GRADED CELL 
 
+client = weaviate.connect_to_local(port=8079, grpc_port=50050)
+
+
 def filter_by_metadata(metadata_property: str, 
                        values: list[str], 
                        collection: "weaviate.collections.collection.sync.Collection" , 
