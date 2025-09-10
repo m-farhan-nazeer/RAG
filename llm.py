@@ -101,3 +101,13 @@ results = [generate_with_single_input(query, temperature = t) for t in [0.3, 1.5
 print(f"Query: {query}")
 for i,(result,temperature) in enumerate(zip(results, [0.3,1.5,3])):
     print(f"\033[1mCall number {i+1}.\033[0m \033[1mTemperature = {temperature}\033[0m\nResponse: {result['content']}\n\n\n")
+
+
+
+# Generate three responses
+query = "List healthy breakfast options."
+
+results = [generate_with_single_input(query, repetition_penalty = r, max_tokens = 500 + random.randint(1,200)) for r in [None, 1.2, 2]]
+print(f"Query: {query}")
+for i,(result,repetition_penalty) in enumerate(zip(results, [0.3,1.5,3])):
+    print(f"\033[1mCall number {i+1}.\033[0m \033[1mRepetition Penalty = {repetition_penalty}\033[0m\nResponse: {result['content']}\n\n\n")
