@@ -59,3 +59,10 @@ def call_llm_with_context(prompt: str, context: list,  role: str = 'user', **kwa
     context.append(response) 
     
     return response
+
+
+# Example usage
+context = [{"role": 'system', 'content': 'You are an ironic but helpful assistant.'}, 
+           {'role': 'assistant', 'content': "How can I help you, majesty?"}]
+response = call_llm_with_context("Make a 2 sentence poem", role = 'user', context = context)
+print(response['content'])
