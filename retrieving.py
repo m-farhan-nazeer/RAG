@@ -40,3 +40,39 @@ def filter_by_metadata(metadata_property: str,
 res = filter_by_metadata('title', ['Taylor Swift'], collection, limit = 2)
 for x in res:
     print_object_properties(x)
+
+
+
+
+# GRADED CELL 
+
+def semantic_search_retrieve(query: str,
+                             collection: "weaviate.collections.collection.sync.Collection" , 
+                             top_k: int = 5) -> list:
+    """
+    Performs a semantic search on a collection and retrieves the top relevant chunks.
+
+    This function executes a semantic search query on a specified collection to find text chunks 
+    that are most relevant to the input 'query'. The search retrieves a limited number of top 
+    matching objects, as specified by 'top_k'. The function returns the 'chunk' property of 
+    each of the top matching objects.
+
+    Args:
+    query (str): The search query used to find relevant text chunks.
+    collection (weaviate.collections.collection.sync.Collection): The collection in which the semantic search is performed.
+    top_k (int, optional): The number of top relevant objects to retrieve. Defaults to 5.
+
+    Returns:
+    List[str]: A list of text chunks that are most relevant to the given query.
+    """
+    ### START CODE HERE ###
+    
+
+    # Retrieve using collection.query.near_text
+    response = collection.query.near_text(query=query,limit=top_k)
+
+    ### END CODE HERE ###
+    
+    response_objects = [x.properties for x in response.objects]
+    
+    return response_objects
