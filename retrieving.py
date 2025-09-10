@@ -30,3 +30,9 @@ def filter_by_metadata(metadata_property: str,
     response_objects = [x.properties for x in response.objects]
     
     return response_objects
+
+
+# Let's get an example
+res = filter_by_metadata('title', ['Taylor Swift'], collection, limit = 2)
+for x in res:
+    print_object_properties(x)
