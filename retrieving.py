@@ -108,3 +108,41 @@ def bm25_retrieve(query: str,
     
     response_objects = [x.properties for x in response.objects]
     return response_objects 
+
+
+# GRADED CELL 
+
+def hybrid_retrieve(query: str, 
+                    collection: "weaviate.collections.collection.sync.Collection" , 
+                    alpha: float = 0.5,
+                    top_k: int = 5
+                   ) -> list:
+    """
+    Performs a hybrid search on a collection and retrieves the top relevant chunks.
+
+    This function executes a hybrid search that combines semantic vector search and traditional 
+    keyword-based search on a specified collection to find text chunks most relevant to the 
+    input 'query'. The relevance of results is influenced by 'alpha', which balances the weight 
+    between vector and keyword matches. It retrieves a limited number of top matching objects, 
+    as specified by 'top_k', and returns the 'chunk' property of these objects.
+
+    Args:
+    query (str): The search query used to find relevant text chunks.
+    collection (weaviate.collections.collection.sync.Collection): The collection in which the hybrid search is performed.
+    alpha (float, optional): A weighting factor that balances the contribution of semantic 
+    and keyword matches. Defaults to 0.5.
+    top_k (int, optional): The number of top relevant objects to retrieve. Defaults to 5.
+
+    Returns:
+    List[str]: A list of text chunks that are most relevant to the given query.
+    """
+    ### START CODE HERE ### 
+
+    # Retrieve using collection.query.hybrid
+    response = collection.query.hybrid(query=query,alpha=alpha,limit=top_k)
+
+    ### END CODE HERE ###
+    
+    response_objects = [x.properties for x in response.objects]
+    
+    return response_objects 
