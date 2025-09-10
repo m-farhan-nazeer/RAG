@@ -1,6 +1,7 @@
 # GRADED CELL 
 
 client = weaviate.connect_to_local(port=8079, grpc_port=50050)
+collection = client.collections.get("bbc_collection")
 
 
 def filter_by_metadata(metadata_property: str, 
