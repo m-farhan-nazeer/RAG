@@ -191,3 +191,47 @@ def semantic_search_with_reranking(query: str,
     response_objects = [x.properties for x in response.objects]
     
     return response_objects 
+
+
+# GRADED CELL 
+
+def semantic_search_with_reranking(query: str, 
+                                   rerank_property: str,
+                                   collection: "weaviate.collections.collection.sync.Collection" , 
+                                   rerank_query: str = None,
+                                   top_k: int = 5
+                                   ) -> list:
+    """
+    Performs a semantic search and reranks the results based on a specified property.
+
+    Args:
+        query (str): The search query to perform the initial search.
+        rerank_property (str): The property used for reranking the search results.
+        collection (weaviate.collections.collection.sync.Collection): The collection to search within.
+        rerank_query (str, optional): The query to use specifically for reranking. If not provided, 
+                                      the original query is used for reranking.
+        top_k (int, optional): The maximum number of top results to return. Defaults to 5.
+
+    Returns:
+        list: A list of properties from the reranked search results, where each item corresponds to 
+              an object in the collection.
+    """
+    ### START CODE HERE ### 
+    
+
+
+    # Set the rerank_query to be the same as the query if rerank_query is not passed (don't change this line)
+    if rerank_query is None: 
+        rerank_query = query 
+        
+    # Define the reranker with rerank_query and rerank_property
+    reranker = Rerank(prop=rerank_property,query=rerank_query)
+
+    # Retrieve using collection.query.near_text with the appropriate parameters (do not forget the rerank!)
+    response = collection.query.near_text(query=query,limit=top_k,rerank=reranker)
+
+    ### END CODE HERE ###
+    
+    response_objects = [x.properties for x in response.objects]
+    
+    return response_objects 
