@@ -76,3 +76,35 @@ def semantic_search_retrieve(query: str,
     response_objects = [x.properties for x in response.objects]
     
     return response_objects
+
+
+# GRADED CELL 
+
+def bm25_retrieve(query: str, 
+                  collection: "weaviate.collections.collection.sync.Collection" , 
+                  top_k: int = 5) -> list:
+    """
+    Performs a BM25 search on a collection and retrieves the top relevant chunks.
+
+    This function executes a BM25-based search query on a specified collection to identify text 
+    chunks that are most relevant to the provided 'query'. It retrieves a limited number of the 
+    top matching objects, as specified by 'top_k', and returns the 'chunk' property of these objects.
+
+    Args:
+    query (str): The search query used to find relevant text chunks.
+    collection (weaviate.collections.collection.sync.Collection): The collection in which the BM25 search is performed.
+    top_k (int, optional): The number of top relevant objects to retrieve. Defaults to 5.
+
+    Returns:
+    List[str]: A list of text chunks that are most relevant to the given query.
+    """
+    
+    ### START CODE HERE ###
+
+    # Retrieve using collection.query.bm25
+    response = collection.query.bm25(query=query,limit=top_k)
+
+    ### END CODE HERE ### 
+    
+    response_objects = [x.properties for x in response.objects]
+    return response_objects 
