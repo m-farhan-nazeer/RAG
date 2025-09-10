@@ -93,3 +93,11 @@ query = "In one sentence, explain to me what is RAG (Retrieval Augmented Generat
 results = [generate_with_single_input(query, top_k = 10, max_tokens = 500 + random.randint(1, 200)) for _ in range(3)]
 for i,result in enumerate(results):
     print(f"Call number {i+1}:\nResponse: {result['content']}")
+
+
+
+# Generate three responses
+results = [generate_with_single_input(query, temperature = t) for t in [0.3, 1.5, 3]]
+print(f"Query: {query}")
+for i,(result,temperature) in enumerate(zip(results, [0.3,1.5,3])):
+    print(f"\033[1mCall number {i+1}.\033[0m \033[1mTemperature = {temperature}\033[0m\nResponse: {result['content']}\n\n\n")
