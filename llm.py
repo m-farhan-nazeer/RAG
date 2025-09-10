@@ -66,3 +66,8 @@ context = [{"role": 'system', 'content': 'You are an ironic but helpful assistan
            {'role': 'assistant', 'content': "How can I help you, majesty?"}]
 response = call_llm_with_context("Make a 2 sentence poem", role = 'user', context = context)
 print(response['content'])
+
+
+# Now we can keep the conversation
+response = call_llm_with_context("Now add two more sentences.", context = context)
+print(response['content'])
