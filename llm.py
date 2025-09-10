@@ -79,3 +79,10 @@ query = "In one sentence, explain to me what is RAG (Retrieval Augmented Generat
 results = [generate_with_single_input(query, top_p = 0, max_tokens = 500 + random.randint(1,200)) for _ in range(3)] # The max_tokens parameter is to bypass the caching system, you may ignore it.
 for i,result in enumerate(results):
     print(f"Call number {i+1}:\nResponse: {result['content']}")
+
+
+
+# Generate three responses
+results = [generate_with_single_input(query, top_p = 0.8, max_tokens = 500 + random.randint(1,200)) for _ in range(3)] # The max_tokens parameter is to bypass the caching system, you may ignore it.
+for i,result in enumerate(results):
+    print(f"Call number {i+1}:\nResponse: {result['content']}")
