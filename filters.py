@@ -68,3 +68,28 @@ def check_if_faq_or_product(query: str) -> str:
     ### END CODE HERE ###
     
     return label
+def generate_faq_layout(faq_dict: list) -> str:
+    """
+    Generates a formatted string layout for a list of FAQs.
+
+    This function iterates through a dictionary of frequently asked questions (FAQs) and constructs
+    a string where each question is followed by its corresponding answer and type.
+
+    Parameters:
+    - faq_dict (list): A list of dictionaries, each containing keys 'question', 'answer', and 'type' 
+      representing an FAQ entry.
+
+    Returns:
+    - str: A string representing the formatted layout of FAQs, with each entry on a separate line.
+    """
+    # Initialize an empty string
+    t = ""
+
+    # Iterate over every FAQ question in the FAQ list
+    for f in faq_dict:
+        # Append the question with formatted string (remember to use f-string and access the values as f['question'], f['answer'] and so on)
+        # Also, do not forget to add a new line character (\n) at the end of each line.
+        t += f"Question: {f['question']} Answer: {f['answer']} Type: {f['type']}\n" 
+  
+
+    return t
