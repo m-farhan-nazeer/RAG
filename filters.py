@@ -186,3 +186,65 @@ def get_params_for_task(task: str) -> dict:
     ### END CODE HERE ###
     
     return param_dict
+# GRADED CELL
+
+def generate_metadata_from_query(query: str) -> str:
+    """
+    Generates metadata in JSON format based on a given query to filter clothing items.
+
+    This function constructs a prompt for an LLM to produce a JSON object
+    that will guide filtering in a vector database query for clothing items.
+    It uses possible values from a predefined set and ensures that only relevant metadata
+    is included in the output JSON.
+
+    Parameters:
+    - query (str): A description of specific clothing-related needs.
+
+    Returns:
+    - str: A JSON string representing metadata with keys such as gender, masterCategory,
+      articleType, baseColour, price, usage, and season. Each value in the JSON is a list.
+      The price is specified as a dictionary with "min" and "max" keys.
+      For unrestricted categories, use ["Any"], and if no price is specified,
+      default to {"min": 0, "max": "inf"}.
+    """
+    ### START CODE HERE ### 
+
+    # Construct the prompt.
+    # Include the query, the desired JSON format, and the possible values (pass {values} where needed).
+    # Clearly instruct the LLM to include gender, masterCategory, articleType, baseColour, price, usage, and season as keys.
+    # Specify that the price key must be a JSON object with "min" and "max" values (0 if no lower bound, "inf" if no upper bound).
+    # If no price is set, default to min = None
+    prompt = f""" A query will be provided. Based on this query, a vector database will be searched to find relevant clothing items.
+    Generate a JSON object containing useful metadata to filter products for this query.
+    The possible values for each feature are given in the following JSON: {values}
+
+Provide a JSON containing the features that best match the query (values should be in lists, multiple values possible).
+If a price range is mentioned, include a price key specifying the range (between values, greater than, or less than).
+Return only the JSON, nothing else. The price key must be a JSON object with "min" and "max" values (use 0 if no lower bound, and "inf" if no upper bound).
+Always include the following keys: gender, masterCategory, articleType, baseColour, price, usage, and season.
+If no price is specified, set min = 0 and max = inf.
+Include only values present in the JSON above.
+
+Example of expected JSON:
+
+{{
+  "gender": ["Women"],
+  "masterCategory": ["Apparel"],
+  "articleType": ["Dresses"],
+  "baseColour": ["Blue"],
+  "price": {{"min": 0, "max": "inf"}},
+  "usage": ["Formal"],
+  "season": ["All seasons"]
+}}
+
+Query: {query}"""
+
+    # Generate the response with generate_with_single_input using PROMPT, temperature=0 (low randomness), and max_tokens=1500
+    response = generate_with_single_input(prompt,temperature=0,max_tokens=1500)
+
+    # Extract the content from the response
+    content = response['content']
+
+    ### END CODE HERE ###
+    
+    return content
