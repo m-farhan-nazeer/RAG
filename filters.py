@@ -339,3 +339,52 @@ def parse_json_output(llm_output: str) -> dict:
             filters.append(Filter.by_property(key).contains_any(value))
 
     return filters
+
+
+def get_relevant_products_from_query(query: str):
+    """
+    Retrieve products that are most relevant to a given query by applying filters.
+
+    This function generates filters based on the provided query and uses them to find 
+    products that closely match the query criteria. If no filters are applicable or if 
+    the initial search returns a small number of products, the function dynamically reduces 
+    the filtering constraints based on a predefined order of filter importance.
+
+    Parameters:
+    query (str): The query string used to search for relevant products.
+
+    Returns:
+    list: A list of product objects that are most relevant to the query. If filters are not effective,
+          it adjusts them to ensure a minimum return of products.
+    """
+    filters = generate_filters_from_query(query)  # Generate filters based on query
+
+    # Check if there are no applicable filters
+    if filters is None or len(filters) == 0:
+        # Query the collection without filters, using the query text for relevance
+        res = products_collection.query.near_text(query, limit=20).objects
+        return res
+
+    # Query with filters and limit to top 20 relevant objects
+    res = products_collection.query.near_text(query, filters=Filter.all_of(filters), limit=20).objects
+
+    # If the result set is fewer than 10 products, try reducing filters to broaden the search
+    importance_order = ['baseColour', 'masterCategory', 'usage', 'masterCategory', 'season', 'gender']
+
+    if len(res) < 10:
+        # Iterate through the importance order of filters
+        for i in range(len(importance_order)):
+            # Create a list of filters that excludes less important ones
+            filtered_filters = [x for x in filters if x.target not in importance_order[i+1:]]
+            
+            # Re-query with the reduced set of filters
+            res = products_collection.query.near_text(query, filters=Filter.all_of(filtered_filters), limit=20).objects
+            
+            # If sufficient products have been found, return early
+            if len(res) >= 5:
+                return res
+        # If there are no enough results, perform a basic near_text with only the query.
+        if len(res) < 5:
+            res = products_collection.query.near_text(query, limit=20).objects
+        
+    return res  # Return the final set of relevant products
