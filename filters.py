@@ -277,3 +277,65 @@ def parse_json_output(llm_output: str) -> dict:
     except json.JSONDecodeError as e:
         print(f"JSON parsing failed: {e}")
         return None
+    
+
+    def get_filter_by_metadata(json_output: dict | None = None):
+    """
+    Generate a list of Weaviate filters based on a provided metadata dictionary.
+
+    Parameters:
+    - json_output (dict) or None: Dictionary containing metadata keys and their values.
+
+    Returns:
+    - list[Filter] or None: A list of Weaviate filters, or None if input is None.
+    """
+    # If the input dictionary is None, return None immediately
+    if json_output is None:
+        return None
+
+    # Define a tuple of valid keys that are allowed for filtering
+    valid_keys = (
+        'gender',
+        'masterCategory',
+        'articleType',
+        'baseColour',
+        'price',
+        'usage',
+        'season',
+    )
+
+    # Initialize an empty list to store the filters
+    filters = []
+
+    # Iterate over each key-value pair in the input dictionary
+    for key, value in json_output.items():
+        # Skip the key if it is not in the list of valid keys
+        if key not in valid_keys:
+            continue
+
+        # Special handling for the 'price' key
+        if key == 'price':
+            # Ensure the value associated with 'price' is a dictionary
+            if not isinstance(value, dict):
+                continue
+
+            # Extract the minimum and maximum prices from the dictionary
+            min_price = value.get('min')
+            max_price = value.get('max')
+
+            # Skip if either min_price or max_price is not provided
+            if min_price is None or max_price is None:
+                continue
+
+            # Skip if min_price is non-positive or max_price is infinity
+            if min_price <= 0 or max_price == 'inf':
+                continue
+
+            # Add filters for price greater than min_price and less than max_price
+            filters.append(Filter.by_property(key).greater_than(min_price))
+            filters.append(Filter.by_property(key).less_than(max_price))
+        else:
+            # For other valid keys, add a filter that checks for any of the provided values
+            filters.append(Filter.by_property(key).contains_any(value))
+
+    return filters
