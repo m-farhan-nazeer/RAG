@@ -269,3 +269,34 @@ class VoiceNote(BaseModel):
     actionItems: list[str] = Field(
         description="A list of action items from the voice note"
     )
+
+
+
+transcript = (
+        "Good morning! It's 7:00 AM, and I'm just waking up. Today is going to be a busy day, "
+        "so let's get started. First, I need to make a quick breakfast. I think I'll have some "
+        "scrambled eggs and toast with a cup of coffee. While I'm cooking, I'll also check my "
+        "emails to see if there's anything urgent."
+    )
+
+
+messages=[
+            {
+                "role": "system",
+                "content": "The following is a voice message transcript. Only answer in JSON.",
+            },
+            {
+                "role": "user",
+                "content": transcript,
+            },
+        ]
+
+response_format={
+            "type": "json_schema",
+            "schema": VoiceNote.model_json_schema(),
+        }
+
+result = generate_with_multiple_input(messages, response_format = response_format)
+
+result_json = json.loads(result['content'])
+print(json.dumps(result_json, indent=2))
