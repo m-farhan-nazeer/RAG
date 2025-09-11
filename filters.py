@@ -12,3 +12,5 @@ from utils import (
     generate_with_single_input,
     generate_params_dict
 )
+
+client = weaviate.connect_to_local(port=8079, grpc_port=50050)
