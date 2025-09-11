@@ -150,3 +150,39 @@ PROVIDED FAQ: {FAQ_LAYOUT}
     ### END CODE HERE ###
     
     return kwargs
+
+
+# GRADED CELL 
+
+def get_params_for_task(task: str) -> dict:
+    """
+    Retrieves specific LLM parameters based on the nature of the task.
+
+    This function returns parameter sets optimized for either creative or technical tasks.
+    Creative tasks benefit from higher randomness, while technical tasks require more focus and precision.
+    A default parameter set is returned for unrecognized task types.
+
+    Parameters:
+    - task (str): The nature of the task ('creative' or 'technical').
+
+    Returns:
+    - dict: A dictionary containing 'top_p' and 'temperature' settings appropriate for the task.
+    """
+    ### START CODE HERE ###
+    # Define the parameter sets for technical and creative tasks
+    PARAMETERS_DICT = {
+        "creative": {"top_p": 0.3, 'temperature': 1},
+        "technical": {'top_p': 0.7, 'temperature': 0.3}
+    }
+    
+    # Return the corresponding parameter set based on task type
+    if task == 'technical':
+        param_dict =PARAMETERS_DICT["technical"]
+    elif task == 'creative':
+        param_dict = PARAMETERS_DICT["creative"]
+    else:
+        # Fallback to a default parameter set for unrecognized task types
+        param_dict =  {'top_p': 0, 'temperature': 0}
+    ### END CODE HERE ###
+    
+    return param_dict
