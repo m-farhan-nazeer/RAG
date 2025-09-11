@@ -256,3 +256,16 @@ Always output a list even if there is only one command to be applied, do not out
     return result['content']
 
 
+# ------------------------------------------------------------------pydantic model for specific output schema---------------------------------
+
+from pydantic import BaseModel, validator, conint, Field
+from typing import Literal, Union, Optional, List
+import json
+
+# Define the schema for the output
+class VoiceNote(BaseModel):
+    title: str = Field(description="A title for the voice note")
+    summary: str = Field(description="A short one sentence summary of the voice note.")
+    actionItems: list[str] = Field(
+        description="A list of action items from the voice note"
+    )
