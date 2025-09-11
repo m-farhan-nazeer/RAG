@@ -111,3 +111,33 @@ results = [generate_with_single_input(query, repetition_penalty = r, max_tokens 
 print(f"Query: {query}")
 for i,(result,repetition_penalty) in enumerate(zip(results, [0.3,1.5,3])):
     print(f"\033[1mCall number {i+1}.\033[0m \033[1mRepetition Penalty = {repetition_penalty}\033[0m\nResponse: {result['content']}\n\n\n")
+
+
+
+def print_response(response):
+    """
+    Prints a formatted chatbot response with color-coded roles.
+
+    The function uses ANSI escape codes to apply text styles. Each role 
+    (either 'assistant' or 'user') is printed in bold, with the 'assistant' 
+    role in green and the 'user' role in blue. The content of the response 
+    follows the role name.
+
+    Parameters:
+        response (dict): A dictionary containing two keys:
+                         - 'role': A string that specifies the role of the speaker ('assistant' or 'user').
+                         - 'content': A string with the message content to be printed.
+    """
+    # ANSI escape codes
+    BOLD = "\033[1m"
+    BLUE = "\033[34m"
+    GREEN = "\033[32m"
+    RESET = "\033[0m"
+
+    if response['role'] == 'assistant':
+        color = GREEN
+    if response['role'] == 'user':
+        color = BLUE
+
+    s = f"{BOLD}{color}{response['role'].capitalize()}{RESET}: {response['content']}"
+    print(s)
