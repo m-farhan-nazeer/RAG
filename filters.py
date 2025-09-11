@@ -431,3 +431,51 @@ def generate_items_context(results: list) -> str:
         )
 
     return t  # Return the complete formatted string with product details
+
+def query_on_products(query: str) -> dict:
+    """
+    Execute a product query process to generate a response based on the nature of the query.
+
+    This function analyzes the type of query — whether it is technical or creative — and retrieves 
+    relevant product information accordingly. It constructs a prompt that includes product details 
+    and the original query, and then generates parameters for querying an LLM.
+    Finally, it generates a response based on the prompt and returns the content of the response.
+
+    Parameters:
+    query (str): The input query string that needs to be analyzed and answered using product data.
+
+    Returns:
+    dict: A dictionary of keyword arguments (`kwargs`) containing the prompt and additional settings 
+          for creating a response, suitable for input to an LLM or other processing system.
+
+    Outputs:
+    dict: A dictionary with the parameters to call an LLM
+    """
+
+
+    # Determine if the query is technical or creative in nature
+    query_label = decide_task_nature(query) 
+    
+    # Obtain necessary parameters based on the query type
+    parameters_dict = get_params_for_task(query_label) 
+    
+    # Retrieve products that are relevant to the query
+    relevant_products = get_relevant_products_from_query(query) 
+     
+    # Create a context string from the relevant products
+    context = generate_items_context(relevant_products) 
+
+    # Construct a prompt including product details and the query. Remember to add the context and the query in the prompt, also, ask the LLM to provide the product ID in the answer
+    prompt = (
+    f"Given the available set of cloth products, answer the question that follows, providing the item ID in your answers. "
+    f"Other information might be provided but not necessarily all of them; pick only the relevant ones for the given query and avoid being too long when describing the items' features. "
+    f"If no number of products is mentioned in the query, select at most five to show. "
+    f"CLOTH PRODUCTS AVAILABLE: {context} "
+    f"QUERY: {query}"
+        )
+    
+    # Generate kwargs (parameters dict) for parameterized input to the LLM with , Prompt, role = 'assistant' and **parameters_dict
+    kwargs = generate_params_dict(prompt, role='assistant', **parameters_dict)
+    
+    
+    return kwargs
