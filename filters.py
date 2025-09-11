@@ -479,3 +479,37 @@ def query_on_products(query: str) -> dict:
     
     
     return kwargs
+
+
+def answer_query(query: str) -> dict:
+    """
+    Determines the type of a given query (FAQ or Product) and executes the appropriate workflow.
+
+    Parameters:
+    - query (str): The user's query string.
+
+    Returns:
+    - dict: A dictionary of keyword arguments to be used for further processing.
+      If the query is neither FAQ nor Product-related, returns a default response dictionary
+      instructing the assistant to answer based on existing context.
+    """
+    label = check_if_faq_or_product(query)
+    if label not in ['FAQ', 'Product']:
+        return {
+            "role": "assistant",
+            "prompt": f"User provided a question that does not fit FAQ or Product related questions. "
+                      f"Answer it based on the context you already have so far. Query provided by the user: {query}"
+        }
+    if label == 'FAQ':
+        kwargs = query_on_faq(query)
+    if label == 'Product':
+        try:
+            kwargs = query_on_products(query)
+        except:
+            return {
+            "role": "assistant",
+            "prompt": f"User provided a question that broke the querying system. Instruct them to rephrase it."
+                      f"Answer it based on the context you already have so far. Query provided by the user: {query}"
+        }
+            
+    return kwargs
