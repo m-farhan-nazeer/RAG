@@ -58,5 +58,32 @@ for item in queries:
         color = RED
 
     print(f"Query: {query}\nResult: {result}\nExpected: {color}{expected_label}{RESET}\n")
+
+
+
+def decide_if_technical_or_creative(query):
+    """
+    Determines whether a given query is creative or technical in nature.
+
+    Args:
+        query (str): The query string to be evaluated.
+
+    Returns:
+        str: A label indicating the query type, either 'creative' or 'technical'.
+
+    This function constructs a prompt to classify a query based on its content. 
+    Creative queries typically involve requests to generate original content, whereas 
+    technical queries relate to documentation or technical information, such as procedures.
+    By leveraging an LLM, it identifies the query type and returns an appropriate label.
+    """
+    
+    PROMPT = f"""Decide if the following query is a creative query or a technical query.
+    Creative queries ask you to create content, while technical queries are related to documentation or technical requests, like information about procedures.
+    Answer only 'creative' or 'technical'.
+    Query: {query}
+    """
+    result = generate_with_single_input(PROMPT)
+    label = result['content']
+    return label
     
     
