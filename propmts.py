@@ -85,5 +85,12 @@ def decide_if_technical_or_creative(query):
     result = generate_with_single_input(PROMPT)
     label = result['content']
     return label
+
+
+queries = ["What is Pi-hole?", 
+           "Suggest to me three places to visit in South America"]
+for query in queries:
+    label =decide_if_technical_or_creative(query)
+    print(f"Query: {query}, label: {label}")
     
     
