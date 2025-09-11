@@ -248,3 +248,32 @@ Query: {query}"""
     ### END CODE HERE ###
     
     return content
+
+
+def parse_json_output(llm_output: str) -> dict:
+    """
+    Parses a string output from an LLM into a JSON object.
+
+    This function attempts to clean and parse a JSON-formatted string produced by an LLM.
+    The input string might contain minor formatting issues, such as unnecessary newlines or single quotes
+    instead of double quotes. The function attempts to correct such issues before parsing.
+
+    Parameters:
+    - llm_output (str): The string output from the LLM that is expected to be in JSON format.
+
+    Returns:
+    - dict or None: A dictionary if parsing is successful, or None if the input string cannot be parsed into valid JSON.
+
+    Exception Handling:
+    - In case of a JSONDecodeError during parsing, an error message is printed, and the function returns None.
+    """
+    try:
+        # Since the input might be improperly formatted, ensure any single quotes are removed
+        llm_output = llm_output.replace("\n", '').replace("'",'').replace("}}", "}").replace("{{", "{")  # Remove any erroneous structures
+        
+        # Attempt to parse JSON directly provided it is a properly-structured JSON string
+        parsed_json = json.loads(llm_output)
+        return parsed_json
+    except json.JSONDecodeError as e:
+        print(f"JSON parsing failed: {e}")
+        return None
