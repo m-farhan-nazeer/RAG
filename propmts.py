@@ -135,3 +135,10 @@ def answer_query(query):
     result = response['content']
     return result
     
+
+
+queries = ["What is Pi-hole?", 
+           "Suggest to me three places to visit in South America"]
+for query in queries:
+    result = answer_query(query)
+    print(f"Query: {query}\nAnswer: {result}\n\n#######\n")
