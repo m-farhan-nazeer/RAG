@@ -93,3 +93,32 @@ def generate_faq_layout(faq_dict: list) -> str:
   
 
     return t
+
+
+# GRADED CELL
+
+def query_on_faq(query: str, **kwargs) -> dict:
+    """
+    Constructs a prompt to query an FAQ system and generates a response.
+
+    Parameters:
+    - query (str): The query about which the function seeks to provide an answer from the FAQ.
+    - **kwargs: Optional keyword arguments for extra configuration of prompt parameters.
+
+    Returns:
+    - str: The response generated from the LLM based on the input query and FAQ layout.
+
+    """
+    ### START CODE HERE ###
+
+    # Make the prompt. Don't forget to add the FAQ_LAYOUT and the query in it!
+    prompt = f"""you hav FAQ and its layout is <FAQ>
+PROVIDED FAQ: {FAQ_LAYOUT}
+</FAQ> and you have to response to query:{query}"""
+
+    # Generate the parameters dict with PROMPT and **kwargs 
+    kwargs = generate_params_dict(prompt)
+
+    ### END CODE HERE ###
+    
+    return kwargs
