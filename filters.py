@@ -388,3 +388,46 @@ def get_relevant_products_from_query(query: str):
             res = products_collection.query.near_text(query, limit=20).objects
         
     return res  # Return the final set of relevant products
+
+
+
+def generate_items_context(results: list) -> str:
+    """
+    Compile detailed product information from a list of result objects into a formatted string.
+
+    This function takes a list of results, each containing various product attributes, and constructs 
+    a human-readable summary for each product. Each product's details, including ID, name, category, 
+    usage, gender, type, and other characteristics, are concatenated into a string that describes 
+    all products in the list.
+
+    Parameters:
+    results (list): A list of result objects, each having a `properties` attribute that is a dictionary 
+                    containing product attributes such as 'product_id', 'productDisplayName', 
+                    'masterCategory', 'usage', 'gender', 'articleType', 'subCategory', 
+                    'baseColour', 'season', and 'year'.
+
+    Returns:
+    str: A multi-line string where each line contains the formatted details of a single product.
+         Each product detail includes the product ID, name, category, usage, gender, type, color, 
+         season, and year.
+    """
+    t = ""  # Initialize an empty string to accumulate product information
+
+    for item in results:  # Iterate through each item in the results list
+        item = item.properties  # Access the properties dictionary of the current item
+
+        # Append formatted product details to the output string
+        t += (
+            f"Product ID: {item['product_id']}. "
+            f"Product name: {item['productDisplayName']}. "
+            f"Product Category: {item['masterCategory']}. "
+            f"Product usage: {item['usage']}. "
+            f"Product gender: {item['gender']}. "
+            f"Product Type: {item['articleType']}. "
+            f"Product Category: {item['subCategory']} "
+            f"Product Color: {item['baseColour']}. "
+            f"Product Season: {item['season']}. "
+            f"Product Year: {item['year']}.\n"
+        )
+
+    return t  # Return the complete formatted string with product details
