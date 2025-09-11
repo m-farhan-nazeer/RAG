@@ -180,3 +180,13 @@ def chat(temperature = None,
         # Print the most recent user output, followed by the assistant response
         print_response(context[-2])
         print_response(context[-1])
+
+
+# Setting up a list to serve as the context. It will contain a system prompt and an initial assistant prompt.
+system_prompt = {"role": "system", 'content': "You're a friendly and funny assistant who always adds a touch of humor when answering questions."}
+assistant_prompt = {"role": "assistant", "content": "Hey there, fabulous! Ready to have some fun and get things done? How can this charming assistant help you today?"}
+context = [system_prompt, assistant_prompt]
+
+
+# To run again with different parameters, either write STOP or click the stop button in the Jupyter Lab panel
+chat()
