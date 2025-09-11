@@ -93,4 +93,45 @@ for query in queries:
     label =decide_if_technical_or_creative(query)
     print(f"Query: {query}, label: {label}")
     
+
+
+def answer_query(query):
+    """
+    Processes a query and generates an appropriate response by categorizing the query
+    as either 'technical' or 'creative', and modifies behavior based on this categorization.
+
+    Args:
+        query (str): The query string to be answered.
+
+    Returns:
+        str: A generated response from the LLM tailored to the nature of the query.
+
+    This function first determines the nature of the query using the `decide_if_technical_or_creative` function. 
+    If the query is classified as 'technical', it sets parameters suitable for precise and low-variability responses. 
+    If the query is 'creative', it applies parameters allowing for more variability and creativity. 
+    If the classification is inconclusive, it uses neutral parameters. 
+    It then generates a response using these parameters and returns the content.
+    """
+    
+    # Determine whether the query is 'technical' or 'creative'
+    label = decide_if_technical_or_creative(query).lower()
+
+    # Set parameters for technical queries (precise, low randomness)
+    if label == 'technical':
+        kwargs = generate_params_dict(query, temperature=0, top_p=0.1)
+    
+    # Set parameters for creative queries (variable, high randomness)
+    elif label == 'creative':
+        kwargs = generate_params_dict(query, temperature=1.1, top_p=0.4)
+
+    # Use default parameters if the query type is inconclusive
+    else:
+        kwargs = generate_params_dict(query, temperature=0.5, top_p=0.5)
+    
+    # Generate a response based on the query type and parameters
+    response = generate_with_single_input(**kwargs)
+    
+    # Extract and return the content from the response
+    result = response['content']
+    return result
     
