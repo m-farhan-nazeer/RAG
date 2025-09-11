@@ -24,4 +24,39 @@ Instructions: Respond with “Nutritional” if the query pertains to nutritiona
 Answer only one single word.
 """
     return prompt
+
+
+
+# ASCII color codes
+GREEN = '\033[92m'
+RED = '\033[91m'
+RESET = '\033[0m'
+
+queries = [
+    {"query": "Where can I buy whey protein?", "label": "Nutritional"},
+    {"query": "Recommended vitamins for winter", "label": "Nutritional"},
+    {"query": "Latest fashion for women's dresses", "label": "Outfit"},
+    {"query": "Comfortable sneakers for daily use", "label": "Outfit"},
+    {"query": "Best energy bars for athletes", "label": "Nutritional"},
+    {"query": "Trendy accessories for men", "label": "Outfit"},
+    {"query": "Low-carb diet food options", "label": "Nutritional"},
+    {"query": "What supplements help with muscle recovery?", "label": "Nutritional"},
+    {"query": "Casual wear that supports healthy living", "label": "Outfit"}
+]
+
+for item in queries:
+    query = item["query"]
+    prompt = check_if_outfit_or_supplement(query)
+    expected_label = item["label"]
+    response = generate_with_single_input(prompt, max_tokens = 2)
+    result = response['content']
+    
+    # Determine color based on comparison
+    if result == expected_label:
+        color = GREEN
+    else:
+        color = RED
+
+    print(f"Query: {query}\nResult: {result}\nExpected: {color}{expected_label}{RESET}\n")
+    
     
