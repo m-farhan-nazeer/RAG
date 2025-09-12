@@ -252,3 +252,15 @@ def retrieve(query_text, limit=5):
             )  
 
         return results
+    
+
+# Process and format the retrieved results
+@tracer.chain 
+def format_context(results):
+    context = ""
+    for item in results.objects:
+        properties = item.properties
+        context += f"Question: {properties['question']}\n"
+        context += f"Answer: {properties['answer']}\n"
+    return context
+     
