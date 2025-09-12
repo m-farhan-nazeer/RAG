@@ -148,3 +148,37 @@ tracer_provider_phoenix = register(project_name=phoenix_project_name, endpoint =
 
 # Retrieve a tracer for manual instrumentation
 tracer = tracer_provider_phoenix.get_tracer(__name__)
+
+
+
+def retrieve(query, fail=False):
+    # Start a span to trace the retrieval process. Now we can pass a span kind: retriever
+    with tracer.start_as_current_span("retrieving_documents", openinference_span_kind = 'retriever') as span:
+        # Log the event of starting retrieval
+        span.add_event("Starting retrieve")
+        # Record the input query as an attribute for visibility
+        # Phoenix allows you to use span.set_input
+        span.set_input(query)
+        try:
+            # Simulate a retrieval failure if 'fail' is True
+            if fail:
+                raise ValueError(f"Retrieve failed for query: {query}")
+
+            # Simulated list of retrieved documents
+            retrieved_docs = ['retrieved doc1', 'retrieved doc2', 'retrieved doc3']
+            # Record details about each retrieved document
+            for i, doc in enumerate(retrieved_docs):
+                span.set_attribute(f"retrieval.documents.{i}.document.id", i)
+                span.set_attribute(f"retrieval.documents.{i}.document.content", doc)
+                span.set_attribute(f"retrieval.documents.{i}.document.metadata", f"Metadata for document {i}")
+        except Exception as e:
+            # If an exception occurs, log and set the span status to indicate an error
+            span.set_status(Status(StatusCode.ERROR, str(e)))
+            span.set_attribute("error.type", type(e).__name__)
+            span.set_attribute("error.message", str(e))
+            # Reraise the exception for handling by the caller
+            raise
+
+        # Mark the span as successful if no error was raised
+        span.set_status(Status(StatusCode.OK))
+        return retrieved_docs
