@@ -135,3 +135,16 @@ def rag_pipeline(query, fail = False):
             span.set_status(Status(StatusCode.ERROR, str(e)))
             # Reraise the exception for external handling
             raise
+
+
+
+from phoenix.otel import register
+from opentelemetry.trace import Status, StatusCode
+phoenix_project_name = "example-rag-pipeline"
+
+# With phoenix, we just need to register to get the tracer provider with the appropriate endpoint.
+endpoint="http://127.0.0.1:6006/v1/traces"
+tracer_provider_phoenix = register(project_name=phoenix_project_name, endpoint = endpoint)
+
+# Retrieve a tracer for manual instrumentation
+tracer = tracer_provider_phoenix.get_tracer(__name__)
