@@ -62,3 +62,76 @@ def retrieve(query, fail=False):
         # Mark the span as successful if no error was raised
         span.set_status(Status(StatusCode.OK))
         return retrieved_docs
+    
+
+
+def format_documents(retrieved_docs):
+    # Start a span to trace the formatting of documents
+    with tracer.start_as_current_span("call_format_documents") as span:
+        # Log the event for initiating document formatting
+        span.add_event("Calling format_documents")
+        # Record the number of documents being formatted
+        span.set_attribute("input.documents_count", len(retrieved_docs))
+
+        t = ''
+        for i, doc in enumerate(retrieved_docs):
+            t += f'Retrieved doc: {doc}\n'
+            # Log an event for each processed document
+            span.add_event(f"processed document {i}", {"document.content": doc})
+
+        # Mark the span as successful after formatting documents
+        span.set_status(Status(StatusCode.OK))
+    return t
+
+def augment_prompt(query, formatted_documents):
+    # Start a span to trace the prompt augmentation process
+    with tracer.start_as_current_span("augment_prompt") as span:
+        # Log the event for the beginning of prompt augmentation
+        span.add_event("Starting prompt augmentation")
+        # Record input details such as the query and document length
+        span.set_attribute("input.query", query)
+        span.set_attribute("input.formatted_documents_length", len(formatted_documents))
+
+        # Create a prompt that combines the query and formatted documents
+        PROMPT = f"Answer the query: {query}.\nRelevant documents:\n{formatted_documents}"
+
+        # Mark the span as successful
+        span.set_status(Status(StatusCode.OK))
+    return PROMPT
+
+def generate(prompt):
+    # Start a span to trace the text generation based on the prompt
+    with tracer.start_as_current_span("generate") as span:
+        # Log the event for starting text generation
+        span.add_event("Starting text generation")
+        # Record the prompt being used for generation
+        span.set_attribute("input.prompt", prompt)
+
+        # Simulate the text generation process
+        generated_text = f"Generated text for prompt {prompt}"
+
+        # Mark the span as successful after text generation
+        span.set_status(Status(StatusCode.OK))
+    return generated_text
+
+def rag_pipeline(query, fail = False):
+    # Start a span to trace the entire RAG pipeline process
+    with tracer.start_as_current_span("rag_pipeline") as span:
+        try:
+            # Step 1: Retrieve documents based on the query
+            retrieved_docs = retrieve(query, fail = fail)
+            # Step 2: Format the retrieved documents
+            formatted_docs = format_documents(retrieved_docs)
+            # Step 3: Augment the query with relevant documents to form a prompt
+            prompt = augment_prompt(query, formatted_docs)
+            # Step 4: Generate a response from the augmented prompt
+            generated_response = generate(prompt)
+
+            # Mark the span as successful when all steps are completed
+            span.set_status(Status(StatusCode.OK))
+            return generated_response
+        except Exception as e:
+            # If any step raises an exception, set the span status to error
+            span.set_status(Status(StatusCode.ERROR, str(e)))
+            # Reraise the exception for external handling
+            raise
