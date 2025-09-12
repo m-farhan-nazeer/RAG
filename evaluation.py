@@ -182,3 +182,36 @@ def retrieve(query, fail=False):
         # Mark the span as successful if no error was raised
         span.set_status(Status(StatusCode.OK))
         return retrieved_docs
+    
+
+
+@tracer.chain
+def format_documents(retrieved_docs):
+    t = ''
+    for i, doc in enumerate(retrieved_docs):
+        t += f'Retrieved doc: {doc}\n'
+    return t
+
+@tracer.chain
+def augment_prompt(query, formatted_documents):
+    
+    # Create a prompt that combines the query and formatted documents
+    PROMPT = f"Answer the query: {query}.\nRelevant documents:\n{formatted_documents}"
+    return PROMPT
+
+@tracer.chain
+def generate(prompt):
+    generated_text = f"Generated text for prompt {prompt}"
+    return generated_text
+
+@tracer.chain
+def rag_pipeline(query, fail = False):
+        # Step 1: Retrieve documents based on the query
+        retrieved_docs = retrieve(query, fail = fail)
+        # Step 2: Format the retrieved documents
+        formatted_docs = format_documents(retrieved_docs)
+        # Step 3: Augment the query with relevant documents to form a prompt
+        prompt = augment_prompt(query, formatted_docs)
+        # Step 4: Generate a response from the augmented prompt
+        generated_response = generate(prompt)
+        return generated_response
