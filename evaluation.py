@@ -227,3 +227,28 @@ tracer_provider_phoenix = register(project_name=phoenix_project_name, endpoint="
 
 # Retrieve a tracer for manual instrumentation
 tracer = tracer_provider_phoenix.get_tracer(__name__)
+
+
+
+def retrieve(query_text, limit=5):
+    # Start a span for the query
+    with tracer.start_as_current_span(
+        "query_weaviate", openinference_span_kind="retriever"
+    ) as span:
+        # Set the input for the span
+        span.set_input(query_text)
+
+        # Query the collection
+        collection_name = "Faq"
+        chunks = client.collections.get(collection_name)
+        results = chunks.query.near_text(query=query_text, limit=limit)
+
+        # Set the retrieved documents as attributes on the span
+        for i, document in enumerate(results.objects):
+            span.set_attribute(f"retrieval.documents.{i}.document.id", str(document.uuid))
+            span.set_attribute(f"retrieval.documents.{i}.document.metadata", str(document.metadata))
+            span.set_attribute(
+                f"retrieval.documents.{i}.document.content", str(document.properties)
+            )  
+
+        return results
