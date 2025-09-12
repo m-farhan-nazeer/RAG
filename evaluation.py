@@ -215,3 +215,15 @@ def rag_pipeline(query, fail = False):
         # Step 4: Generate a response from the augmented prompt
         generated_response = generate(prompt)
         return generated_response
+
+
+
+from phoenix.otel import register
+phoenix_project_name = "example-rag-pipeline-with-weaviate"
+
+# With phoenix, we just need to register to get the tracer provider with the appropriate endpoint. Providing auto_instrument = True, OpenAI calls are automatically traced
+# TogetherAI is OpenAI compatible!
+tracer_provider_phoenix = register(project_name=phoenix_project_name, endpoint="http://127.0.0.1:6006/v1/traces", auto_instrument=True)
+
+# Retrieve a tracer for manual instrumentation
+tracer = tracer_provider_phoenix.get_tracer(__name__)
