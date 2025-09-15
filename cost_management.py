@@ -85,3 +85,104 @@ def generate_params_dict(
         "model": model
     }
     return kwargs
+
+
+# GRADED CELL 
+def check_if_faq_or_product(query, simplified = False):
+    """
+    Determines whether a given instruction prompt is related to a frequently asked question (FAQ) or a product inquiry.
+
+    Parameters:
+    - query (str): The instruction or query that needs to be labeled as either FAQ or Product related.
+    - simplified (bool): If True, uses a simplified prompt.
+
+    Returns:
+    - str: The label 'FAQ' if the prompt is deemed a frequently asked question, 'Product' if it is related to product information, or
+      None if the label is inconclusive.
+    """
+ 
+    # If not simplified, uses a more complex prompt
+    if not simplified:
+        PROMPT = f"""Label the following instruction as an FAQ related answer or a product related answer for a clothing store.
+        Product related answers are answers specific about product information or that needs to use the products to give an answer.
+        Examples:
+                Is there a refund for incorrectly bought clothes? Label: FAQ
+                Where are your stores located?: Label: FAQ
+                Tell me about the cheapest T-shirts that you have. Label: Product
+                Do you have blue T-shirts under 100 dollars? Label: Product
+                What are the available sizes for the t-shirts? Label: FAQ
+                How can I contact you via phone? Label: FAQ
+                How can I find the promotions? Label: FAQ
+                Give me ideas for a sunny look. Label: Product
+        Return only one of the two labels: FAQ or Product, nothing more.
+        Query to classify: {query}
+                 """
+
+    ##############################################
+    ######### GRADED PART STARTS HERE ############
+    ##############################################
+    
+    ### START CODE HERE ###
+
+    # If simlpified, uses a simplified prompt.
+    else:
+        PROMPT =PROMPT = f"""Label the following instruction as an FAQ related or a product related answer.
+         Product related answers are answers specific about product information
+            Examples:
+                Is there a refund for incorrectly bought clothes? Label: FAQ
+                Tell me about the cheapest T-shirts that you have. Label: Product
+                Where are your stores located?: Label: FAQ
+                Do you have blue T-shirts under 100 dollars? Label: Product
+                How can I find the promotions? Label: FAQ
+                Give me ideas for a sunny look. Label: Product
+        Return only one FAQ or Product.
+        Query to classify: {query}
+                 """
+
+        
+    ### END CODE HERE ###
+
+    ##############################################
+    ######### GRADED PART ENDS HERE ############
+    ##############################################
+        
+    with tracer.start_as_current_span("routing_faq_or_product", openinference_span_kind = 'tool') as span:
+        span.set_input(str({"query":query, "simplified": simplified}))
+        
+        # Get the kwargs dictinary to call the llm, with PROMPT as prompt, low temperature (0 or near 0) and max_tokens = 10
+        kwargs = generate_params_dict(PROMPT, temperature = 0, max_tokens = 10)
+
+        # Call generate_with_single_input with **kwargs
+        with tracer.start_as_current_span("router_call", openinference_span_kind = 'llm') as router_span:
+            router_span.set_input(kwargs)
+            try:
+                response = generate_with_single_input(**kwargs) 
+            except Exception as error:
+                router_span.record_exception(error)
+                router_span.set_status(Status(StatusCode.ERROR))
+            else:
+                # OpenInference Semantic Conventions for computing Costs
+                router_span.set_attribute("llm.token_count.prompt", response['usage']['prompt_tokens'])
+                router_span.set_attribute("llm.token_count.completion", response['usage']['completion_tokens'])
+                router_span.set_attribute("llm.token_count.total", response['usage']['total_tokens'])
+                router_span.set_attribute("llm.model_name", response['model'])
+                router_span.set_attribute("llm.provider", 'together.ai')
+                router_span.set_output(response)
+                router_span.set_status(Status(StatusCode.OK))
+        
+    
+        # Get the Label by accessing the content key of the response dictionary
+        label = response['choices'][0]['message']['content']
+        total_tokens = response['usage']['total_tokens']
+        span.set_output(str({"label": label, 'total_tokens':total_tokens}))
+        span.set_status(Status(StatusCode.OK))
+
+        # Improvement to prevent cases where LLM outputs more than one word
+        if 'faq' in label.lower():
+            label = 'FAQ'
+        elif 'product' in label.lower():
+            label = 'Product'
+        else:
+            label = 'undefined'
+    
+        return label, total_tokens
