@@ -479,3 +479,81 @@ def get_params_for_task(task):
 
     
     return param_dict
+
+
+def generate_metadata_from_query(query):
+    """
+    Generates metadata in JSON format based on a given query to filter clothing items.
+
+    This function constructs a prompt for a language model to create a JSON object that will
+    guide the filtering of a vector database query for clothing items. It takes possible values from
+    a predefined set and ensures only relevant metadata is included in the output JSON.
+
+    Parameters:
+    - query (str): The query describing specific clothing-related needs.
+
+    Returns:
+    - str: A JSON string representing metadata with keys like gender, masterCategory, articleType,
+      baseColour, price, usage, and season. Each value in the JSON is within a list, with prices specified
+      as a dict containing "min" and "max" values. Unrestricted keys should use ["Any"] and unspecified
+      prices should default to {"min": 0, "max": "inf"}.
+    """
+
+    # Set the prompt. Remember to include the query, the desired JSON format, the possible values (passing {values} at some point) 
+    # and explain to the LLM what is going on. 
+    # Explicitly tell the llm to include gender, masterCategory, ArticleType, baseColour, price, usage and season as keys.
+    # Also mention to the llm that price key must be a json with "min" and "max" values (0 if no lower bound and inf if no upper bound)
+    # If there is no price set, add min = 0 and max = inf.
+    PROMPT = f"""
+    One query will be provided. For the given query, there will be a call on vector database to query relevant clothing items. 
+    Generate a JSON with useful metadata to filter the products in the query. Possible values for each feature is in the following json: {values}
+
+    Provide a JSON with the features that best fit in the query (can be more than one, write in a list). Also, if present, add a price key, saying if there is a price range (between values, greater than or smaller than some value).
+    Only return the JSON, nothing more. price key must be a JSON with "min" and "max" values (0 if no lower bound and inf if no upper bound). 
+    Always include gender, masterCategory, articleType, baseColour, price, usage and season as keys. All values must be within lists.
+    If there is no price set, add min = 0 and max = inf.
+    Only include values that are given in the json above. 
+    
+    Example of expected JSON:
+
+    {{
+    "gender": ["Women"],
+    "masterCategory": ["Apparel"],
+    "articleType": ["Dresses"],
+    "baseColour": ["Blue"],
+    "price": {{"min": 0, "max": "inf"}},
+    "usage": ["Formal"],
+    "season": ["All seasons"]
+    }}
+
+    Query: {query}
+             """
+    with tracer.start_as_current_span("generate_metadata_from_query", openinference_span_kind="tool") as span:
+        span.set_input(query)
+        with tracer.start_as_current_span("llm_call", openinference_span_kind="llm") as metadata_span:
+            # Generate the response with the generate_with_single_input, PROMPT, temperature = 0 (low randomness) and max_tokens = 1500.
+            kwargs = {"prompt": PROMPT, 'temperature': 0, "max_tokens": 1500}  # @REPLACE EQUALS None
+            metadata_span.set_input(kwargs)
+            try:
+                response = generate_with_single_input(**kwargs) 
+            except Exception as error:
+                metadata_span.record_exception(error)
+                metadata_span.set_status(Status(StatusCode.ERROR))
+            else:
+                # OpenInference Semantic Conventions for computing Costs
+                metadata_span.set_attribute("llm.token_count.prompt", response['usage']['prompt_tokens'])
+                metadata_span.set_attribute("llm.token_count.completion", response['usage']['completion_tokens'])
+                metadata_span.set_attribute("llm.token_count.total", response['usage']['total_tokens'])
+                metadata_span.set_attribute("llm.model_name", response['model'])
+                metadata_span.set_attribute("llm.provider", 'together.ai')
+                metadata_span.set_output(response)
+                metadata_span.set_status(Status(StatusCode.OK))
+
+        # Get the Label by accessing the content key of the response dictionary
+        content = response['choices'][0]['message']['content']
+        total_tokens = response['usage']['total_tokens']
+        span.set_output({"content": content, 'total_tokens':total_tokens})
+        span.set_status(Status(StatusCode.OK))   
+
+    
+    return content, total_tokens
