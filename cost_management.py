@@ -33,3 +33,16 @@ from opentelemetry.trace import Status, StatusCode
 # Launch the lab and the URL
 make_url()
 session = px.launch_app()
+
+
+# Setting up the telemetry
+
+phoenix_project_name = "chatbot"
+
+# With phoenix, we just need to register to get the tracer provider with the appropriate endpoint. 
+# Different from the ungraded lab, you will NOT use auto_instrument = True, as there are LLM calls not needed to be traced (examples, calls within unittests etc.)
+
+tracer_provider_phoenix = register(project_name=phoenix_project_name, endpoint="http://127.0.0.1:6006/v1/traces")
+
+# Retrieve a tracer for manual instrumentation
+tracer = tracer_provider_phoenix.get_tracer(__name__)
