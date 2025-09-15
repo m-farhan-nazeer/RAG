@@ -443,3 +443,39 @@ def decide_task_nature(query, simplified = True):
         span.set_status(Status(StatusCode.OK))    
     
         return label, total_tokens
+    
+
+
+@tracer.tool
+def get_params_for_task(task):
+    """
+    Retrieves specific language model parameters based on the task nature.
+
+    This function provides parameter sets tailored for creative or technical tasks to optimize
+    language model behavior. For creative tasks, higher randomness is encouraged, while technical
+    tasks are handled with more focus and precision. A default parameter set is provided for unexpected cases.
+
+    Parameters:
+    - task (str): The nature of the task ('creative' or 'technical').
+
+    Returns:
+    - dict: A dictionary containing 'top_p' and 'temperature' settings for the specified task.
+    """
+    # Create the parameters dict for technical and creative tasks
+    PARAMETERS_DICT = {"creative": {'top_p': 0.9, 'temperature': 1},
+                       "technical": {'top_p': 0.7, 'temperature': 0.3}} 
+    
+    # If task is technical, return the value for the key technical in PARAMETERS_DICT
+    if task == 'technical':
+        param_dict = PARAMETERS_DICT['technical'] 
+
+    # If task is creative, return the value for the key creative in PARAMETERS_DICT
+    if task == 'creative':
+        param_dict = PARAMETERS_DICT['creative'] 
+
+    # If task is a different value, fallback to another set of parameters
+    else: # Fallback to a standard value
+        param_dict = {'top_p': 0.5, 'temperature': 1} 
+
+    
+    return param_dict
