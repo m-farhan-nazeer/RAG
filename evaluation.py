@@ -348,3 +348,7 @@ def rag_pipeline(query):
     final_answer = query_openai(final_prompt)
 
     return final_answer
+
+
+response = rag_pipeline("Can I get a refund or exchange for another shirt?")
+print(response)
