@@ -355,3 +355,7 @@ print(response)
 
 response = rag_pipeline("What are your working hours?")
 print(response)
+
+
+# Checkout the traces in the Phoenix UI!
+utils.make_url()
