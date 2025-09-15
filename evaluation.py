@@ -352,3 +352,6 @@ def rag_pipeline(query):
 
 response = rag_pipeline("Can I get a refund or exchange for another shirt?")
 print(response)
+
+response = rag_pipeline("What are your working hours?")
+print(response)
