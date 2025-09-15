@@ -19,3 +19,6 @@ from utils import (
     print_properties,
     make_url
 )
+
+
+client = weaviate.connect_to_local(port=8079, grpc_port=50050)
