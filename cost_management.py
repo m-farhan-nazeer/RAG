@@ -354,3 +354,92 @@ def query_on_faq(query, simplified = False, **kwargs):
             span.set_status(Status(StatusCode.OK))
     
             return kwargs
+        
+
+
+# GRADED CELL 
+def decide_task_nature(query, simplified = True):
+    """
+    Determines the nature of a query, labeling it as either creative or technical.
+
+    This function constructs a prompt for a language model to decide if a given query requires a creative response,
+    such as making suggestions or composing ideas, or a technical response, like providing product details or prices.
+
+    Parameters:
+    - query (str): The query to be evaluated for its nature.
+    - simplified (bool): If True, uses a simplified prompt.
+
+    Returns:
+    - str: The label 'creative' if the query requires creative input, or 'technical' if it requires technical information.
+    """
+
+
+    
+    if not simplified:
+        PROMPT = f"""Decide if the following query is a query that requires creativity (creating, composing, making new things) or technical (information about products, prices etc.). Label it as creative or technical.
+          Examples:
+          Give me suggestions on a nice look for a nightclub. Label: creative
+          What are the blue dresses you have available? Label: technical
+          Give me three Tshirts for summer. Label: technical
+          Give me a look for attending a wedding party. Label: creative
+          Give me suggestions on clothes that match a green Tshirt. Label: creative
+          I would like a suggestion on which products match a green Tshirt I already have. Label: creative
+
+          Query to be analyzed: {query}. Only output one token with the label
+          """
+
+    # If simplified, uses a simplified query
+
+    ##############################################
+    ######### GRADED PART STARTS HERE ############
+    ##############################################
+
+    ### START CODE HERE ###
+
+    else:
+        PROMPT =  PROMPT = f"""Decide if query that requires creativity (creating, composing, making new things) or technical (information about products, prices etc.). Label it as creative or technical.
+          Examples:
+          Give me suggestions on a nice look for a nightclub. Label: creative
+          What are the blue dresses you have available? Label: technical
+          Give me three Tshirts for summer. Label: technical
+          Give me a look for attending a wedding party. Label: creative
+
+
+          Query to be analyzed: {query}. Only output one token with the label
+          """
+    ### END CODE HERE ###
+
+    ##############################################
+    ######### GRADED PART ENDS HERE ##############
+    ##############################################
+
+    
+    with tracer.start_as_current_span("decide_task_nature", openinference_span_kind="tool") as span:
+    # Generate the kwards dictionary by passing the PROMPT, low temperature and max_tokens = 1
+        span.set_input({"query":query, "simplified": simplified})
+        kwargs = generate_params_dict(PROMPT, temperature = 0, max_tokens = 1)
+
+        with tracer.start_as_current_span("router_call", openinference_span_kind = 'llm') as router_span:
+            router_span.set_input(kwargs)
+            try:
+                response = generate_with_single_input(**kwargs) 
+            except Exception as error:
+                router_span.record_exception(error)
+                router_span.set_status(Status(StatusCode.ERROR))
+            else:
+                # OpenInference Semantic Conventions for computing Costs
+                router_span.set_attribute("llm.token_count.prompt", response['usage']['prompt_tokens'])
+                router_span.set_attribute("llm.token_count.completion", response['usage']['completion_tokens'])
+                router_span.set_attribute("llm.token_count.total", response['usage']['total_tokens'])
+                router_span.set_attribute("llm.model_name", response['model'])
+                router_span.set_attribute("llm.provider", 'together.ai')
+                router_span.set_output(response)
+                router_span.set_status(Status(StatusCode.OK))
+
+        # Get the Label by accessing the content key of the response dictionary
+        label = response['choices'][0]['message']['content']
+        total_tokens = response['usage']['total_tokens']
+        span.set_output(str({"label": label, 'total_tokens':total_tokens}))
+        span.set_status(Status(StatusCode.OK))    
+    
+        return label, total_tokens
