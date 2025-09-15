@@ -333,3 +333,18 @@ def query_openai(prompt):
         ],
     )
     return response.choices[0].message.content
+
+
+@tracer.chain
+def rag_pipeline(query):
+    # Execute the query
+    retrieved_documents = retrieve(query)
+    context = format_context(retrieved_documents)
+    
+    # Create a prompt with the retrieved information
+    final_prompt = create_prompt(query, context)
+    
+    # Execute the OpenAI query
+    final_answer = query_openai(final_prompt)
+
+    return final_answer
