@@ -868,3 +868,59 @@ def query_on_products(query, simplified = False):
 
     
     return kwargs, total_tokens
+
+
+@tracer.tool
+def answer_query(query, model = "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",simplified=False):
+    """
+    Processes a user's query to determine its type (FAQ or Product) and executes the appropriate workflow.
+    
+    Parameters:
+    - query (str): The query string provided by the user.
+    - model (str): The model that will answer the question. Defaults to meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo'
+    - simplified (bool): If True, uses a simplified version of the method. Defaults to False.
+    
+    Returns:
+    - dict: A dictionary containing keyword arguments for further processing.
+      If the query is neither FAQ nor Product-related, returns a default response dictionary instructing
+      the assistant to answer based on existing context.
+    """
+    # Initialize the total tokens used to zero
+    total_tokens = 0
+    
+    # Determine if the query is FAQ or Product and get the token count for this step
+    label, tokens = check_if_faq_or_product(query, simplified=simplified)
+    
+    # Sum the tokens
+    total_tokens += tokens
+    
+    # If the query is neither FAQ nor Product, return a default response
+    if label not in ['FAQ', 'Product']:
+        return {
+            "role": "assistant",
+            "prompt": (f"User provided a question that does not fit FAQ or Product-related categories. "
+                       f"Answer it based on the context you already have. Query provided by the user: {query}")
+        }
+    
+    # Process the query based on its label
+    if label == 'FAQ':
+        # Handle FAQ-related queries
+        kwargs = query_on_faq(query, simplified=simplified)
+    elif label == 'Product':
+        try:
+            # Handle Product-related queries, with error handling in place
+            kwargs, tokens = query_on_products(query, simplified=simplified)
+            # Add the tokens to the total tokens
+            total_tokens += tokens
+        except Exception:
+            # Return an error response if an exception occurs during querying
+            return {
+                "role": "assistant",
+                "prompt": (f"User provided a question that broke the querying system. "
+                           f"Instruct them to rephrase it. Answer it based on the context you already have. "
+                           f"Query provided by the user: {query}")
+            }, total_tokens
+    # Set the model to answer the final query - usually a better one         
+    kwargs['model'] = model
+    # Return the kwargs and total_tokens for further processing
+    return kwargs, total_tokens
