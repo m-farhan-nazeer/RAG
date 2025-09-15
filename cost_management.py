@@ -22,3 +22,14 @@ from utils import (
 
 
 client = weaviate.connect_to_local(port=8079, grpc_port=50050)
+
+
+
+import phoenix as px
+from phoenix.otel import register
+from opentelemetry.trace import Status, StatusCode
+
+
+# Launch the lab and the URL
+make_url()
+session = px.launch_app()
