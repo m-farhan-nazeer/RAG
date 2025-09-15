@@ -249,3 +249,108 @@ with faq_collection.batch.fixed_size(batch_size=20, concurrent_requests=5) as ba
             properties=document,
             uuid=uuid,
         )
+
+
+
+# GRADED CELL 
+
+def query_on_faq(query, simplified = False, **kwargs):
+    """
+    Constructs a prompt to query an FAQ system and generates a response.
+
+    This function integrates an FAQ layout into the prompt to help generate a suitable answer to the given query
+    using a language model. It supports additional keyword arguments to customize the prompt generation process.
+
+    Parameters:
+    - query (str): The query about which the function seeks to provide an answer from the FAQ.
+    - simplified (bool): If True, uses semantic search to extract a relevant subset of FAQ questions
+    - **kwargs: Optional keyword arguments for extra configuration of prompt parameters.
+
+    Returns:
+    - str: The response generated from the language model based on the input query and FAQ layout.
+
+    """
+
+    
+    # If not simplified, generate the faq layout with the entire FAQ questions
+    if not simplified:
+        # Set the tracer as a chain type, since in non-simplified version, the full FAQ is used
+        with tracer.start_as_current_span("query_on_faq", openinference_span_kind="tool") as span:
+            
+            span.set_input({"query": query, "simplified": simplified})
+            faq_layout = generate_faq_layout(faq)
+            
+            # Generate the prompt
+            PROMPT = f"""You will be provided with an FAQ for a clothing store. 
+        Answer the instruction based on it. You might use more than one question and answer to make your answer. Only answer the question and do not mention that you have access to a FAQ. 
+        <FAQ_ITEMS>
+        PROVIDED FAQ: {faq_layout}
+        </FAQ_ITEMS>
+        Question: {query}
+            """ 
+            span.set_attribute("prompt", PROMPT)
+
+            # Generate the parameters dict with PROMPT and **kwargs 
+            kwargs = generate_params_dict(PROMPT, **kwargs) 
+
+            span.set_attribute("output", str(kwargs))
+            span.set_status(Status(StatusCode.OK))
+    
+            return kwargs
+        
+   
+    
+    else:
+        with tracer.start_as_current_span("query_on_faq", openinference_span_kind="tool") as span:
+            span.set_input({"query": query, "simplified": simplified})
+            with tracer.start_as_current_span("retrieve_faq_questions", openinference_span_kind="retriever") as retrieve_span:
+                
+                ##############################################
+                ######### GRADED PART STARTS HERE ############
+                ##############################################
+                
+                ### START CODE HERE ###
+                
+                # Get the 5 most relevant FAQ objects, in this case limit = None
+                results = faq_collection.query.near_text(query=query,limit=5)
+
+                ### END CODE HERE ###
+
+                ##############################################
+                ######### GRADED PART ENDS HERE ##############
+                ##############################################
+                
+                # Set the retrieved documents as attributes on the span
+                for i, document in enumerate(results.objects): 
+                    retrieve_span.set_attribute(f"retrieval.documents.{i}.document.id", str(document.uuid)) 
+                    retrieve_span.set_attribute(f"retrieval.documents.{i}.document.metadata", str(document.metadata)) 
+                    retrieve_span.set_attribute( 
+                        f"retrieval.documents.{i}.document.content", str(document.properties) 
+                    )  
+            # Transform the results in a list of dictionary
+                results = [x.properties for x in results.objects] 
+                # Reverse the order to add the most relevant objects in the bottom, so it gets closer to the end of the input
+                results.reverse() 
+                # Generate the faq layout with the new list of FAQ questions `results`
+                faq_layout = generate_faq_layout(results) 
+
+            # Different prompt to deal with this new scenario. 
+            PROMPT = (f"You will be provided with a query for a clothing store regarding FAQ. It will be provided relevant FAQ from the clothing store." 
+        f"Answer the query based on the relevant FAQ provided. They are ordered in decreasing relevance, so the first is the most relevant FAQ and the last is the least relevant."  
+        f"Answer the instruction based on them. You might use more than one question and answer to make your answer. Only answer the question and do not mention that you have access to a FAQ.\n"  
+        f"<FAQ>\n"  
+        f"RELEVANT FAQ ITEMS:\n{faq_layout}\n"  
+        f"</FAQ>\n" 
+        f"Query: {query}")
+
+    
+        
+            span.set_attribute("prompt", PROMPT)
+        
+            # Generate the parameters dict with PROMPT and **kwargs 
+            kwargs = generate_params_dict(PROMPT, **kwargs) 
+        
+            span.set_attribute("output", str(kwargs))
+            span.set_status(Status(StatusCode.OK))
+    
+            return kwargs
