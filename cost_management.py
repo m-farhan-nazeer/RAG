@@ -186,3 +186,22 @@ def check_if_faq_or_product(query, simplified = False):
             label = 'undefined'
     
         return label, total_tokens
+    
+
+queries = [
+    'What is your return policy?', 
+    'Give me three examples of blue T-shirts you have available.', 
+    'How can I contact the user support?', 
+    'Do you have blue Dresses?',
+    'Create a look suitable for a wedding party happening during dawn.'
+]
+
+labels = ['FAQ', 'Product', 'FAQ', 'Product', 'Product']
+
+for query, correct_label in zip(queries, labels):
+    # Call check_if_faq_or_product and store the results
+    response_std, tokens_std = check_if_faq_or_product(query, simplified=False)
+    response_simp, tokens_simp = check_if_faq_or_product(query, simplified=True)
+    
+    # Print results
+    process_and_print_query(query, correct_label, response_std, tokens_std, response_simp, tokens_simp)
