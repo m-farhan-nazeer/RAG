@@ -305,3 +305,7 @@ def rag_pipeline(query):
     final_answer = query_openai(final_prompt)
 
     return final_answer
+
+
+import httpx
+from openai import OpenAI, DefaultHttpxClient
