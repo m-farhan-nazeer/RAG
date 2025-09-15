@@ -657,3 +657,117 @@ def generate_filters_from_query(query):
     json_output = parse_json_output(json_string)
     filters = get_filter_by_metadata(json_output)
     return filters, total_tokens
+
+
+# GRADED CELL
+
+def get_relevant_products_from_query(query, simplified = False):
+    """
+    Retrieve the most relevant products for a given query by applying semantic search and optional filters.
+
+    This function generates metadata filters from the query and uses them to search for products 
+    that best match the intended criteria. If `simplified` is True, it performs only a basic semantic 
+    search with no filters. If the filtered search returns too few results, it progressively reduces 
+    filtering constraints based on the predefined importance of each filter.
+
+    Parameters:
+    query (str): The query string used to search for relevant products.
+    simplified (bool): If True, only a simple semantic search is performed without any metadata filters.
+
+    Returns:
+    list: A list of product objects that are most relevant to the query.
+    total_tokens: The number of tokens used in the LLM call. Returns 0 if simplified search is used.
+    """
+    
+    ##############################################
+    ######### GRADED PART STARTS HERE ############
+    ##############################################
+    
+    ### START CODE HERE ###
+    
+    # If simplified, just do a semantic search with 20 objects and return it
+    if simplified:
+        with tracer.start_as_current_span("get_relevant_products_from_query", openinference_span_kind="retriever") as span:  
+            span.set_input({'query':query, 'simplified':simplified})
+            
+            ### YOUR CODE BELOW ###
+            results =products_collection.query.near_text(query, limit=20)
+
+            # Set the retrieved documents as attributes on the span
+            for i, document in enumerate(results.objects): 
+                span.set_attribute(f"retrieval.documents.{i}.document.id", str(document.uuid)) 
+                span.set_attribute(f"retrieval.documents.{i}.document.metadata", str(document.metadata)) 
+                span.set_attribute( 
+                    f"retrieval.documents.{i}.document.content", str(document.properties) #@ KEEP
+                )  
+    
+    ### END CODE HERE ###
+
+    ##############################################
+    ######### GRADED PART ENDS HERE #############
+    ##############################################
+            
+            span.set_output({"results": results.objects, "total_tokens": 0})
+            span.set_status(Status(StatusCode.OK))  
+    
+            return results.objects, 0  # Total tokens in this case is 0 because there was no LLM call!
+    # If not simplified, perform the previous workflow by generating the filters and then doing a semantic search with them
+    
+    with tracer.start_as_current_span("get_relevant_products_from_query", openinference_span_kind="retriever") as span:  
+        span.set_input({'query':query, 'simplified':simplified})
+        filters, total_tokens = generate_filters_from_query(query)  # Generate filters based on the query
+
+    # Check if there are no applicable filters
+        if filters is None or len(filters) == 0:
+            span.set_attribute("retrieval.filters", '')
+            results = products_collection.query.near_text(query, limit=20) 
+            # Set the retrieved documents as attributes on the span
+            for i, document in enumerate(results.objects): 
+                span.set_attribute(f"retrieval.documents.{i}.document.id", str(document.uuid))
+                span.set_attribute(f"retrieval.documents.{i}.document.metadata", str(document.metadata)) 
+                span.set_attribute( 
+                    f"retrieval.documents.{i}.document.content", str(document.properties) 
+                )  
+            span.set_output({"results": results.objects, "total_tokens": total_tokens})
+            span.set_status(Status(StatusCode.OK))  
+            return results.objects, total_tokens
+    # Query with filters and limit to the top 20 relevant objects
+        span.set_attribute("retrieval.filters", str(filters))
+        results = products_collection.query.near_text(query, filters=Filter.all_of(filters), limit=20)
+        span.set_attribute("retrieval.len", len(results.objects))
+        # Set the retrieved documents as attributes on the span
+        for i, document in enumerate(results.objects): 
+            span.set_attribute(f"retrieval.documents.{i}.document.id", str(document.uuid))
+            span.set_attribute(f"retrieval.documents.{i}.document.metadata", str(document.metadata)) 
+            span.set_attribute( 
+                f"retrieval.documents.{i}.document.content", str(document.properties) 
+            )
+    
+        # If the result set contains fewer than 10 products, try reducing filters to broaden the search
+        importance_order = [ 'baseColour', 'masterCategory', 'usage', 'masterCategory', 'season', 'articleType', 'gender']
+        if len(results.objects) < 10:
+            # Iterate through the importance order of filters
+            for i in range(len(importance_order)):
+                with tracer.start_as_current_span(f"refilter_{i}", openinference_span_kind="chain") as refilter_span: 
+                    # Create a list of filters that excludes less important ones
+                    filtered_filters = [x for x in filters if x.target in importance_order[i+1:]]
+                    refilter_span.set_input(str(filtered_filters))
+                    
+                    results = products_collection.query.near_text(query, filters=Filter.all_of(filtered_filters), limit=20)
+                    # Set the retrieved documents as attributes on the span
+                    for j, document in enumerate(results.objects): 
+                        refilter_span.set_attribute(f"retrieval.documents.{j}.document.id", str(document.uuid))
+                        refilter_span.set_attribute(f"retrieval.documents.{j}.document.metadata", str(document.metadata)) 
+                        refilter_span.set_attribute( 
+                            f"retrieval.documents.{j}.document.content", str(document.properties) 
+                        )
+                    # If sufficient products have been found, return early
+                    if len(results.objects) >= 5:
+                        refilter_span.set_output(results.objects)
+                        refilter_span.set_status(Status(StatusCode.OK))  
+                        span.set_output(results.objects)
+                        span.set_status(Status(StatusCode.OK)) 
+                        return results.objects, total_tokens
+        span.set_output(results.objects)
+        span.set_status(Status(StatusCode.OK)) 
+        return results.objects, total_tokens  # Return the final set of relevant products
