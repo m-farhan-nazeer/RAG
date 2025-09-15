@@ -309,3 +309,16 @@ def rag_pipeline(query):
 
 import httpx
 from openai import OpenAI, DefaultHttpxClient
+
+# Custom transport to bypass SSL verification
+transport = httpx.HTTPTransport(local_address="0.0.0.0", verify=False)
+
+# Create a DefaultHttpxClient instance with the custom transport
+http_client = DefaultHttpxClient(transport=transport)
+
+# You can use any openai compatible endpoint here!
+llm_client = OpenAI(
+    api_key = '', # Set any as the proxy running here does not use it. Set the together api key if using the together endpoint
+    base_url="http://proxy.dlai.link/coursera_proxy/together/", # If using together endpoint, add it here https://api.together.xyz/
+   http_client=http_client, # ssl bypass to make it work via proxy calls, remove it if running with together.ai endpoint 
+)
