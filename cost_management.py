@@ -46,3 +46,42 @@ tracer_provider_phoenix = register(project_name=phoenix_project_name, endpoint="
 
 # Retrieve a tracer for manual instrumentation
 tracer = tracer_provider_phoenix.get_tracer(__name__)
+
+
+def generate_params_dict(
+    prompt: str,
+    temperature: float = 1.0,
+    role: str = 'user',
+    top_p: float = 1.0,
+    max_tokens: int = 500,
+    model: str = "meta-llama/Llama-3.2-3B-Instruct-Turbo"
+) -> dict:
+    """
+    Generates a dictionary of parameters for calling a Language Learning Model (LLM),
+    allowing for the customization of several key options that can affect the output from the model. 
+
+    Args:
+        prompt (str): The input text that will be provided to the model to guide text generation.
+        temperature (float): A value between 0 and 1 that controls the randomness of the model's output; 
+            lower values result in more repetitive and deterministic results, while higher values enhance randomness.
+        role (str): The role designation to be used in context, typically identifying the initiator of the interaction.
+        top_p (float): A value between 0 and 1 that manages diversity through the technique of nucleus sampling; 
+            this parameter limits the set of considered words to the smallest possible while maintaining 'top_p' cumulative probability.
+        max_tokens (int): The maximum number of tokens that the model is allowed to generate in response, where a token can 
+            be as short as one character or as long as one word.
+        model (str): The specific model identifier to be utilized for processing the request. This typically specifies both 
+            the version and configuration of the LLM to be employed.
+
+    Returns:
+        dict: A dictionary containing all specified parameters which can then be used to configure and execute a call to the LLM.
+    """
+    # Create the dictionary with the necessary parameters
+    kwargs = {
+        "prompt": prompt,
+        "role": role,
+        "temperature": temperature,
+        "top_p": top_p,
+        "max_tokens": max_tokens,
+        "model": model
+    }
+    return kwargs
