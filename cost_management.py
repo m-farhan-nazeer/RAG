@@ -924,3 +924,6 @@ def answer_query(query, model = "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",si
     kwargs['model'] = model
     # Return the kwargs and total_tokens for further processing
     return kwargs, total_tokens
+
+
+chat_widget_standard = ChatWidget(generator_function = lambda x: answer_query(x, simplified = False), tracer = tracer)
