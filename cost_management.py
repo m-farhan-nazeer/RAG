@@ -557,3 +557,103 @@ def generate_metadata_from_query(query):
 
     
     return content, total_tokens
+
+
+@tracer.tool
+def parse_json_output(llm_output):
+    """
+    Parses a string output from a language model into a JSON object.
+
+    This function attempts to clean and parse a JSON-formatted string produced by a language model (LLM).
+    The input string might contain minor formatting issues, such as unnecessary newlines or single quotes
+    instead of double quotes. The function attempts to correct such issues before parsing.
+
+    Parameters:
+    - llm_output (str): The string output from the language model that is expected to be in JSON format.
+
+    Returns:
+    - dict or None: A dictionary if parsing is successful, or None if the input string cannot be parsed into valid JSON.
+
+    Exception Handling:
+    - In case of a JSONDecodeError during parsing, an error message is printed, and the function returns None.
+    """
+    try:
+        # Since the input might be improperly formatted, ensure any single quotes are removed
+        llm_output = llm_output.replace("\n", '').replace("'",'').replace("}}", "}").replace("{{", "{")  # Remove any erroneous structures
+        
+        # Attempt to parse JSON directly provided it is a properly-structured JSON string
+        parsed_json = json.loads(llm_output)
+        return parsed_json
+    except json.JSONDecodeError as e:
+        print(f"JSON parsing failed: {e}")
+        return None
+
+@tracer.tool
+def get_filter_by_metadata(json_output: dict | None = None):
+    """
+    Generate a list of Weaviate filters based on a provided metadata dictionary.
+
+    Parameters:
+    - json_output (dict) or None: Dictionary containing metadata keys and their values.
+
+    Returns:
+    - list[Filter] or None: A list of Weaviate filters, or None if input is None.
+    """
+    # If the input dictionary is None, return None immediately
+    if json_output is None:
+        return None
+
+    # Define a tuple of valid keys that are allowed for filtering
+    valid_keys = (
+        'gender',
+        'masterCategory',
+        'articleType',
+        'baseColour',
+        'price',
+        'usage',
+        'season',
+    )
+
+    # Initialize an empty list to store the filters
+    filters = []
+
+    # Iterate over each key-value pair in the input dictionary
+    for key, value in json_output.items():
+        # Skip the key if it is not in the list of valid keys
+        if key not in valid_keys:
+            continue
+
+        # Special handling for the 'price' key
+        if key == 'price':
+            # Ensure the value associated with 'price' is a dictionary
+            if not isinstance(value, dict):
+                continue
+
+            # Extract the minimum and maximum prices from the dictionary
+            min_price = value.get('min')
+            max_price = value.get('max')
+
+            # Skip if either min_price or max_price is not provided
+            if min_price is None or max_price is None:
+                continue
+
+            # Skip if min_price is non-positive or max_price is infinity
+            if min_price <= 0 or max_price == 'inf':
+                continue
+
+            # Add filters for price greater than min_price and less than max_price
+            filters.append(Filter.by_property(key).greater_than(min_price))
+            filters.append(Filter.by_property(key).less_than(max_price))
+        else:
+            # For other valid keys, add a filter that checks for any of the provided values
+            filters.append(Filter.by_property(key).contains_any(value))
+
+    return filters
+
+
+@tracer.tool
+def generate_filters_from_query(query):
+    json_string, total_tokens = generate_metadata_from_query(query)
+    json_output = parse_json_output(json_string)
+    filters = get_filter_by_metadata(json_output)
+    return filters, total_tokens
