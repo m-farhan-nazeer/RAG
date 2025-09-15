@@ -232,3 +232,20 @@ def generate_faq_layout(faq_dict):
         t += f"Question: {f['question']} Answer: {f['answer']} Type: {f['type']}\n" 
 
     return t
+
+
+
+from tqdm import tqdm
+from weaviate.util import generate_uuid5
+# Set up a batch process with specified fixed size and concurrency
+with faq_collection.batch.fixed_size(batch_size=20, concurrent_requests=5) as batch:
+    # Iterate over a subset of the dataset
+    for document in tqdm(faq):
+        # Generate a UUID based on the chunk text for unique identification
+        uuid = generate_uuid5(document['question'])
+
+        # Add the chunk object to the batch with properties and UUID
+        batch.add_object(
+            properties=document,
+            uuid=uuid,
+        )
