@@ -322,3 +322,14 @@ llm_client = OpenAI(
     base_url="http://proxy.dlai.link/coursera_proxy/together/", # If using together endpoint, add it here https://api.together.xyz/
    http_client=http_client, # ssl bypass to make it work via proxy calls, remove it if running with together.ai endpoint 
 )
+
+# There is no need to trace as the auto_instrument was set to true
+def query_openai(prompt):
+    response = llm_client.chat.completions.create(
+        model="meta-llama/Llama-3.2-3B-Instruct-Turbo",
+        messages=[
+            {"role": "system", "content": "You are a helpful assistant from a customer support."},
+            {"role": "user", "content": prompt},
+        ],
+    )
+    return response.choices[0].message.content
