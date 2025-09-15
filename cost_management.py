@@ -810,3 +810,61 @@ def generate_items_context(results):
         )
 
     return t  # Return the complete formatted string with product details
+
+
+@tracer.tool
+def query_on_products(query, simplified = False):
+    """
+    Execute a product query process to generate a response based on the nature of the query.
+
+    Parameters:
+    query (str): The input query string that needs to be analyzed and answered using product data.
+    task_nature_prompt_function (func): The prompt function to be used to decide the task nature (if creative of technical)
+    simplified (bool): If True, does not use LLM to generate metadata for filtering
+
+    Returns:
+    dict: A dictionary of keyword arguments (`kwargs`) containing the prompt and additional settings 
+          for creating a response, suitable for input to an LLM or other processing system.
+    int: Number of tokens used in the process to create the kwargs dictionary
+
+    Outputs:
+    str: The content of the generated response from the LLM based on the provided query and product 
+         information.
+    """
+    total_tokens = 0
+    # Determine if the query is technical or creative in nature
+    
+    query_label, tokens = decide_task_nature(query, simplified = simplified)
+    
+    # Sum the tokens used to decide the task nature (creative or technical)
+    total_tokens += tokens
+
+    # Obtain necessary parameters based on the query type
+    parameters_dict = get_params_for_task(query_label)
+    
+    # Retrieve products that are relevant to the query
+    relevant_products, tokens = get_relevant_products_from_query(query, simplified = simplified)
+    
+    # Sum the tokens used to get relevant products 
+    total_tokens += tokens
+     
+    # Create a context string from the relevant products
+    context = generate_items_context(relevant_products)
+
+    # Construct a prompt including product details and the query. Remember to add the context and the query in the prompt, also, ask the LLM to provide the product ID in the answer
+    PROMPT = (
+        f"Given the available set of clothing products given by: "
+        f"CLOTHING PRODUCTS AVAILABLE:\n{context}\n"
+        f"Answer the question that follows.\n"
+        f"Never use more than 5 clothing products available below to compose your answer.\n"
+        f"Provide the item ID in your answers.\n"
+        f"The other information might be provided but not necessarily all of them, pick only the relevant ones for the given query.\n"
+        
+        f"QUERY: {query}"
+    )
+    
+    # Generate kwargs (parameters dict) for parameterized input to the LLM with , Prompt, role = 'assistant' and **parameters_dict
+    kwargs = generate_params_dict(PROMPT, role='assistant', **parameters_dict) 
+
+    
+    return kwargs, total_tokens
